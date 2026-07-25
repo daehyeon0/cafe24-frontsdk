@@ -1,6 +1,6 @@
-const assert = require('node:assert/strict');
-const { afterEach, test } = require('node:test');
-const { createApp } = require('../src/app');
+import assert from 'node:assert/strict';
+import { afterEach, test } from 'node:test';
+import { createApp } from '../src/app.js';
 
 const servers = [];
 

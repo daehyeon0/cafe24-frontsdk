@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 
-function getRawQueryString(originalUrl) {
+export function getRawQueryString(originalUrl) {
   const queryStartIndex = originalUrl.indexOf('?');
 
   return queryStartIndex === -1 ? '' : originalUrl.slice(queryStartIndex + 1);
 }
 
-function createApp({ logger = console } = {}) {
+export function createApp({ logger = console } = {}) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -26,8 +26,3 @@ function createApp({ logger = console } = {}) {
 
   return app;
 }
-
-module.exports = {
-  createApp,
-  getRawQueryString,
-};
