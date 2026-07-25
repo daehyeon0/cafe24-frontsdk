@@ -76,7 +76,6 @@ async function createQuantityPage({
     },
   );
   const nativeSelections = [];
-  let initializedClientId = null;
 
   dom.window.document
     .querySelectorAll('.ec-product-button li a')
@@ -97,21 +96,7 @@ async function createQuantityPage({
       });
     });
 
-  dom.window.CAFE24API = {
-    init(clientId) {
-      initializedClientId = clientId;
 
-      return {
-        getCartItemList(callback) {
-          callback(null, {
-            items: cartVariantCodes.map((variantCode) => ({
-              variant_code: variantCode,
-            })),
-          });
-        },
-      };
-    },
-  };
 
   dom.window.eval(script);
   dom.window.document.dispatchEvent(
@@ -125,7 +110,6 @@ async function createQuantityPage({
     dom,
     cartVariantCodes,
     nativeSelections,
-    getInitializedClientId: () => initializedClientId,
   };
 }
 
@@ -152,10 +136,6 @@ test('수량 옵션 두 개씩을 가격 정보가 포함된 네 개 행으로 �
   assert.match(buttons[0].textContent, /1개 : 2,470원/);
   assert.match(buttons[1].textContent, /가장 많이 사요/);
   assert.match(buttons[3].textContent, /최대할인/);
-  assert.equal(
-    page.getInitializedClientId(),
-    'F79PeGqf20Le8Hvh63GfCA',
-  );
 
   page.dom.window.close();
 });

@@ -318,6 +318,7 @@
 
     var picker = createElement('section', 'ignis-quantity-picker');
     var panel = createElement('ul', 'ignis-quantity-panel');
+    var fragment = document.createDocumentFragment()
 
     Array.from(groups.keys())
       .sort(function (left, right) {
@@ -333,20 +334,20 @@
            discountRate * 100,
         );
 
-        panel.append(
-          createQuantityButton(
-            quantity,
-            Object.assign({}, option, {
-              discountPercentage,
-              unitPrice,
-            }),
-          ),
-        );
+        fragment.append(createQuantityButton(
+          quantity,
+          Object.assign({}, option, {
+            discountPercentage,
+            unitPrice,
+          })
+        ))
       });
 
+    panel.append(fragment);
     picker.append(panel);
 
     row.classList.add('ignis-quantity-option-row');
+    row.classList.remove('displaynone')
     sourceList.dataset.ignisQuantityEnhanced = 'true';
     sourceList.classList.add('ignis-quantity-original');
 
@@ -365,10 +366,10 @@
         return;
       }
 
-      // selectQuantity(picker, groups, button.dataset.quantity);
+      selectQuantity(picker, groups, button.dataset.quantity);
     });
 
-    // refreshPickerState(picker, groups);
+    refreshPickerState(picker, groups);
   }
 
   function enhanceQuantityOptions() {
@@ -388,19 +389,6 @@
 
   function boot() {
     enhanceQuantityOptions();
-
-    window.addEventListener('pageshow', function () {
-      document.querySelectorAll(PICKER_SELECTOR).forEach(function (picker) {
-        var sourceList = picker.parentElement.querySelector(
-          '.ec-product-button[data-ignis-quantity-enhanced]',
-        );
-        var groups = sourceList ? getQuantityGroups(sourceList) : null;
-
-        if (groups) {
-          refreshPickerState(picker, groups);
-        }
-      });
-    });
   }
 
   if (document.readyState === 'loading') {
