@@ -1,0 +1,47 @@
+.regularDeliveryPayInfo { margin:7px 7px 14px; }
+.regularDeliveryPayInfo > h3.title,
+.regularDeliveryPayInfo > div > h3.title { padding:14px; border:1px solid #d5d5d5; border-bottom:none; background:#f1f1f1; }
+.regularDeliveryPayInfo .ec-base-box { margin:0; padding:0; }
+.regularDeliveryPayInfo .information { padding:14px; }
+.regularDeliveryPayInfo .information .content { padding:13px 0 0; }
+.regularDeliveryPayInfo .information .content .info { padding:5px 0 0; font-size:12px; }
+.regularDeliveryPayInfo .information .status { vertical-align:middle; font-size:12px;}
+.regularDeliveryPayInfo .information .status .cardName { font-size:12px; }
+.regularDeliveryPayInfo .button { padding:8px 3px; text-align:center; border-top:1px solid #ececec; font-weight:bold; }
+.regularDeliveryPayInfo .button .btnStrong,
+.regularDeliveryPayInfo .button .btnNormal {  height:35px; line-height:35px; }
+.regularDeliveryPayInfo .button .cardSearch { display:block; }
+.regularDeliveryPayInfo .button .modify { width:49.3%; margin-right:1.4%; }
+.regularDeliveryPayInfo .button .delete { width:49.3%; }
+
+/* 카드정보 조회 */
+.regularDeliveryPayInfo .wrap { display:none; z-index:999; position:fixed; left:2% !important; width:96%; top:100px; margin:0; padding:0; border:1px solid #d5d5d5; background:#fff; border-radius:5px; box-sizing:border-box;
+  -webkit-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.75);
+  -moz-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.75);
+  box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.75);
+}
+.regularDeliveryPayInfo .wrap h3 { padding:0 14px; font-size:13px; line-height:36px; background-color:#f0f0f0; border-bottom:1px solid #d5d5d5; border-radius:5px 5px 0 0; }
+.regularDeliveryPayInfo .wrap .content { padding:14px; }
+.regularDeliveryPayInfo .wrap h4 { position:relative; margin:0 7px 7px; }
+.regularDeliveryPayInfo .wrap h4:before { display:inline-block; content:""; margin:0 5px 0 0; width:3px; height:3px; background:#666; vertical-align:middle; }
+.regularDeliveryPayInfo .wrap .txtEm { color:#008bcc; }
+.regularDeliveryPayInfo .wrap .info { margin:0; color:#757575; font-size:11px; }
+.regularDeliveryPayInfo .wrap .btnClose { overflow:hidden; position:absolute; right:0; top:0; width:36px; height:36px; font-size:0; border:none; background:transparent url("//img.echosting.cafe24.com/skin/mobile/common/btn_close.png") center center no-repeat; background-size:14px 14px; }
+
+.regularDeliveryPayInfo ul.cardList { display: flex; flex-direction: column; gap:13px; color:#353535; }
+.regularDeliveryPayInfo ul.cardList .status { background:none; display: flex; align-items: center; }
+.regularDeliveryPayInfo ul.cardList .cardInfo .cardNumber,
+.regularDeliveryPayInfo ul.cardList .cardInfo .payMethod { margin:0 0 0 16px; }
+.regularDeliveryPayInfo ul.cardList .button { padding:0; min-width: 192px; }
+.regularDeliveryPayInfo ul.cardList.registed .status { justify-content: space-between; }
+.regularDeliveryPayInfo .ec-base-box .information { padding-top:20px 16px; flex-direction:column; align-items: normal; }
+.regularDeliveryPayInfo ul.cardList .status .cardInfo { flex:1; }
+.regularDeliveryPayInfo ul.cardList .status .button { flex:1; min-width: auto; }
+.regularDeliveryPayInfo ul.cardList .status .button [class^='btn'] { display: block; }
+.regularDeliveryPayInfo ul.cardList.registed .status .cardNumber { display:none; }
+.regularDeliveryPayInfo ul.cardList.registed .status.done .cardNumber { display:inline-block; }
+.regularDeliveryPayInfo ul.cardList.registed .status.done { flex-direction: column; align-items: stretch; }
+.regularDeliveryPayInfo ul.cardList.registed .status.done .cardInfo { padding-bottom:10px;}
+.regularDeliveryPayInfo ul.cardList.registed .status.done .button { display:flex;  gap:4px; }
+.regularDeliveryPayInfo ul.cardList.registed .status.done .button [class^='btn'] { flex:1; }
+.regularDeliveryPayInfo .ec-base-box .information .content { flex:1; }

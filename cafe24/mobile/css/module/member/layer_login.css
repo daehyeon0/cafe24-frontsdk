@@ -1,0 +1,18 @@
+.xans-layout-login { display:none; }
+.xans-layout-login .layer-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; background:rgba(0,0,0,.3); z-index: 499; }
+.xans-layout-login .layer-inner { display: flex; align-items: center; height:100%; margin-right: auto; margin-left: auto; }
+.xans-layout-login .ec-base-layer{ position: relative; top:auto; margin: 0 auto; }
+.xans-layout-login .ec-base-layer.typeModal .wrap{ max-height:270px; }
+.xans-layout-login .ec-base-button.gCenter [class^="btn"]{min-width:64px;}
+.xans-layout-login .formBox #member_id,
+.xans-layout-login .formBox #member_passwd { font-size: 15px; }
+.xans-layout-login .formBox .form input[type="text"] { margin: 0 0 7px; }
+.xans-layout-login .formBox .form { margin:26px 0 0; }
+.xans-layout-login .formBox .form input[type="text"],
+.xans-layout-login .formBox .form input[type="password"] { width: 100%; height: 43px; }
+.xans-layout-login .formBox .info { margin:0 0 7px; text-align:center; }
+.xans-layout-login .formBox .loginUtil { font-size:0; text-align:center; } 
+.xans-layout-login .formBox .loginUtil a{ display:inline-block; position:relative; font-size:12px;color: #757575;}
+.xans-layout-login .formBox .loginUtil a + a {padding-left:18px; }
+.xans-layout-login .formBox .loginUtil a + a:before{ content:''; display:inline-block; width:1px; height:11px; position:absolute; left:8px; top:2px; background:#858585; }
+.xans-layout-login .formBox .ec-base-button.gFull { padding:20px 0 13px; margin:0; }

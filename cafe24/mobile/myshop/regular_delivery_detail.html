@@ -1,0 +1,523 @@
+<!--@layout(/layout/basic/layout.html)-->
+
+
+<!--@css(/css/module/myshop/regularDeliveryDetail.css)-->
+<div module="myshop_OrderRegularManageDetailRegister">
+    <div id="titleArea">
+        <h2>{$invoice_type_text} 상세 조회</h2>
+        <span module="Layout_MobileAction">
+        <a href="#none" onclick="{$go_back}"><img src="//img.echosting.cafe24.com/skin/mobile_ko_KR/layout/btn_back.gif" width="33" alt="뒤로가기"></a>
+    </span>
+    </div>
+
+    <div class="ec-base-fold theme1 eToggle">
+        <div class="title">
+            <h2>신청 정보</h2>
+        </div>
+        <div class="contents">
+            <div class="ec-base-table">
+                <table border="1">
+                    <caption>신청 정보</caption>
+                    <colgroup>
+                        <col style="width:115px;">
+                        <col style="width:auto;">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row">신청번호</th>
+                        <td id="{$invoiceNoId}">{$invoice_no}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">신청일자</th>
+                        <td>{$ins_timestamp}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">첫 배송시작일</th>
+                        <td>{$delivery_timestamp}</td>
+                    </tr>
+                    <tr class="{$payInfo_display|display}">
+                        <th scope="row">결제수단</th>
+                        <td class="status">
+                            <div class="payMethod">{$subscriptionPaymethod}</div>
+                            <span id="{$registedCardNumberId}"></span> <span class="cardName" id="{$registedCardNameId}"></span>
+                            <a href="#" id="{$registModifyCardId}" class="btnNormal modify {$modifyCard_display|display}">변경</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <p class="ec-base-help {$modifyText_display|display}">결제수단 변경 시 신청된 정기결제 내역의 결제수단이 함께 변경됩니다.</p>
+</div>
+
+<div class="deliveryInfo" module="myshop_OrderRegularManageDetailList">
+    <div class="ec-base-fold theme1 selected eToggle">
+        <div class="title">
+            <h2>{$invoice_type_text} 정보 (총 {$subscription_item_cnt}개)</h2>
+        </div>
+        <div class="contents">
+            {$form.invoice_no}
+            {$form.has_temp_ord}
+            {$form.return_url}
+            <div module="">
+                <div class="ec-base-prdInfo">
+                    <div class="prdBox">
+                        <div class="thumbnail"><a href="/product/detail.html{$param}"><img src="{$product_image}" alt="{$product_name_alt}" onerror="this.src='//img.echosting.cafe24.com/thumb/img_product_small.gif';" width="71" height="71" /></a></div>
+                        <div class="description">
+                            <strong class="prdName" title="상품명">{$product_name_link}</strong>
+                            <ul class="info">
+                                <li><span id="{$option_str_id}">{$option_str}</span>
+                                    <span class="gRight"><a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a></span>
+                                   <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                       <ul module="Myshop_optionList">
+                                           <li><span>{$option_name}</span>{$form.option_value}</li>
+                                           <li><span>{$option_name}</span>{$form.option_value}</li>
+                                       </ul>
+                                       <ul module="Myshop_optionAddList">
+                                           <li><span>{$option_name}</span> {$form.option_value}</li>
+                                           <li><span>{$option_name}</span> {$form.option_value}</li>
+                                       </ul>
+                                       <div class="button">
+                                           <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                           <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                       </div>
+                                   </div>
+                               </li>
+                                <li class="{$shipping_company_display|display}"><a href="{$shipping_company_link}" target="{$shipping_company_target}">{$shipping_company}</a></li>
+                                <li class="{$invoice_no_display|display}"><a href="#none" class="line" onclick="{$shipping_trace_popup}">[{$invoice_no}]</a></li>
+                                <li>배송 : {$type_all} <span class="{$oversea_able_display|display}">(해외배송가능)</span></li>
+                                <li class="{$card_installment_display|display}">무이자할부 상품</li>
+                                <li class="price">
+                                    <span id="{$productpriceId}" class="{$discount}" title="판매가">
+                                        <span class="txtDel">{$product_price_front_head}{$product_price_front}{$product_price_front_tail}</span>
+                                    </span>
+                                    <span class="{$product_sale_info_display|display}" title="할인판매가">
+                                        <strong>{$product_sale_price_front_head}{$product_sale_price_front}{$product_sale_price_front_tail}</strong><span class="badge">{$product_sale_info}<i class="icoDown">할인</i></span>
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ul class="option" module="Myshop_optionSet">
+                        <li>
+                            <p class="name">
+                                <span class="{$product_name_display|display}">{$product_name} : </span><span id="{$option_str_id}">{$option_str}</span> <span class="{$qty_display|display}">({$qty}개)</span>
+                                <span class="txtEm {$popup_option_change_display|display}">옵션을 선택하세요</span>
+                                <span class="gRight">
+                                    <a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a>
+                                </span>
+                            </p>
+                            <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                <ul module="Myshop_optionList">
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                </ul>
+                                <ul module="Myshop_optionAddList">
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                </ul>
+                                <div class="button">
+                                    <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                    <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <p class="name">
+                                <span class="{$product_name_display|display}">{$product_name} : </span><span id="{$option_str_id}">{$option_str}</span> <span class="{$qty_display|display}">({$qty}개)</span>
+                                <span class="txtEm {$popup_option_change_display|display}">옵션을 선택하세요</span>
+                                <span class="gRight">
+                                    <a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a>
+                                </span>
+                            </p>
+                            <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                <ul module="Myshop_optionList">
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                </ul>
+                                <ul module="Myshop_optionAddList">
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                </ul>
+                                <div class="button">
+                                    <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                    <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="ec-base-table typeWrite">
+                        <table border="1">
+                            <caption>정기배송 정보 수정</caption>
+                            <colgroup>
+                                <col style="width:80px;">
+                                <col style="width:auto;">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th scope="row">수량</th>
+                                <td>
+                                    <div class="ec-base-qty">
+                                        <a href="javascript:;" class="QuantityDown qtyDown" onclick="{$out_shortcut}"><img alt="down" src="//img.echosting.cafe24.com/skin/mobile_ko_KR/order/ico_quantity_down.jpg" width="33" height="29"></a>
+                                        {$form.product_cnt}
+                                        <a href="javascript:;" class="QuantityUp qtyUp" onclick="{$add_shortcut}"><img alt="up" src="//img.echosting.cafe24.com/skin/mobile_ko_KR/order/ico_quantity_up.jpg" width="33" height="29" ></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송시작일</th>
+                                <td>
+                                    <div class="datepicker">
+                                        {$form.expected_delivery_date}
+                                    </div>
+                                    <p class="txtLess">[{$expected_pay_seq}회차] {$expected_pay_date_info}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송주기</th>
+                                <td>
+                                    {$form.subscription_cycle}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송횟수</th>
+                                <td>
+                                    {$form.max_expected_pay_seq}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="prdFoot">
+                        <div class="gRight">
+                            <a href="#none" class="btnNormal mini {$pauseScriptionItemClass}" data-pause_action_json="{$pause_action_json}" data-has_temporder="{$temp_order}">{$pause_button_text}</a>
+                            <a href="#none" class="btnNormal mini {$cancelScriptionItemClass}" data-cancel_action_json="{$cancel_action_json}" data-has_temporder="{$temp_order}">{$cancel_button_text}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="contents">
+            <div mocule="">
+                <div class="ec-base-prdInfo">
+                    <div class="prdBox">
+                        <div class="thumbnail"><a href="/product/detail.html{$param_product}"><img src="{$product_image}" alt="{$product_name_alt}" onerror="this.src='//img.echosting.cafe24.com/thumb/img_product_small.gif';" width="71" height="71" /></a></div>
+                        <div class="description">
+                            <strong class="prdName" title="상품명">{$product_name_link}</strong>
+                            <ul class="info">
+                                <li><span id="{$option_str_id}">{$option_str}</span>
+                                    <span class="gRight"><a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a></span>
+                                   <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                       <ul module="Myshop_optionList">
+                                           <li><span>{$option_name}</span>{$form.option_value}</li>
+                                           <li><span>{$option_name}</span>{$form.option_value}</li>
+                                       </ul>
+                                       <ul module="Myshop_optionAddList">
+                                           <li><span>{$option_name}</span> {$form.option_value}</li>
+                                           <li><span>{$option_name}</span> {$form.option_value}</li>
+                                       </ul>
+                                       <div class="button">
+                                           <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                           <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                       </div>
+                                   </div>
+                               </li>
+                                <li class="{$shipping_company_display|display}"><a href="{$shipping_company_link}" target="{$shipping_company_target}">{$shipping_company}</a></li>
+                                <li class="{$invoice_no_display|display}"><a href="#none" class="line" onclick="{$shipping_trace_popup}">[{$invoice_no}]</a></li>
+                                <li>배송 : {$type_all} <span class="{$oversea_able_display|display}">(해외배송가능)</span></li>
+                                <li class="{$card_installment_display|display}">무이자할부 상품</li>
+                                <li class="price">
+                                    <span id="{$productpriceId}" class="{$discount}" title="판매가">
+                                        <span class="txtDel">{$product_price_front_head}{$product_price_front}{$product_price_front_tail}</span>
+                                    </span>
+                                    <span class="{$product_sale_info_display|display}" title="할인판매가">
+                                        <strong>{$product_sale_price_front_head}{$product_sale_price_front}{$product_sale_price_front_tail}</strong><span class="badge">{$product_sale_info}<i class="icoDown">할인</i></span>
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ul class="option" module="Myshop_optionSet">
+                        <li>
+                            <p class="name">
+                                <span class="{$product_name_display|display}">{$product_name} : </span><span id="{$option_str_id}">{$option_str}</span> <span class="{$qty_display|display}">({$qty}개)</span>
+                                <span class="txtEm {$popup_option_change_display|display}">옵션을 선택하세요</span>
+                                <span class="gRight">
+                                    <a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a>
+                                </span>
+                            </p>
+                            <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                <ul module="Myshop_optionList">
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                </ul>
+                                <ul module="Myshop_optionAddList">
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                </ul>
+                                <div class="button">
+                                    <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                    <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <p class="name">
+                                <span class="{$product_name_display|display}">{$product_name} : </span><span id="{$option_str_id}">{$option_str}</span> <span class="{$qty_display|display}">({$qty}개)</span>
+                                <span class="txtEm {$popup_option_change_display|display}">옵션을 선택하세요</span>
+                                <span class="gRight">
+                                    <a href="#none" class="btnBasic {$option_change_display|display}" onclick="{$action_option_change}">옵션변경</a>
+                                </span>
+                            </p>
+                            <div class="layerOptionModify" id="{$option_modify_layer_id}" style="display:none;">
+                                <ul module="Myshop_optionList">
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                    <li><span>{$option_name}</span>{$form.option_value}</li>
+                                </ul>
+                                <ul module="Myshop_optionAddList">
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                    <li><span>{$option_name}</span> {$form.option_value}</li>
+                                </ul>
+                                <div class="button">
+                                    <a href="#none" class="btnBasic" onclick="{$action_option_modify}">변경</a>
+                                    <a href="#none" class="btnNormal" onclick="$('.layerOptionModify').hide();">취소</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="ec-base-table typeWrite">
+                        <table border="1">
+                            <caption>정기배송 정보 수정</caption>
+                            <colgroup>
+                                <col style="width:80px;">
+                                <col style="width:auto;">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th scope="row">수량</th>
+                                <td>
+                                    <div class="ec-base-qty">
+                                        <a href="javascript:;" class="QuantityDown qtyDown" onclick="{$out_shortcut}"><img alt="down" src="//img.echosting.cafe24.com/skin/mobile_ko_KR/order/ico_quantity_down.jpg" width="33" height="29"></a>
+                                        {$form.product_cnt}
+                                        <a href="javascript:;" class="QuantityUp qtyUp" onclick="{$add_shortcut}"><img alt="up" src="//img.echosting.cafe24.com/skin/mobile_ko_KR/order/ico_quantity_up.jpg" width="33" height="29" ></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송시작일</th>
+                                <td>
+                                    <div class="datepicker">
+                                        {$form.expected_delivery_date}
+                                    </div>
+                                    <p class="txtLess">[{$expected_pay_seq}회차] {$expected_pay_date_info}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송주기</th>
+                                <td>
+                                    {$form.subscription_cycle}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송횟수</th>
+                                <td>
+                                    {$form.max_expected_pay_seq}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="prdFoot">
+                        <div class="gRight">
+                            <a href="#none" class="btnNormal mini {$pauseScriptionItemClass}" data-pause_action_json="{$pause_action_json}" data-has_temporder="{$temp_order}">{$pause_button_text}</a>
+                            <a href="#none" class="btnNormal mini {$cancelScriptionItemClass}" data-cancel_action_json="{$cancel_action_json}" data-has_temporder="{$temp_order}">{$cancel_button_text}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="userInfo" module="myshop_OrderRegularManageDetailReceiver">
+        <div class="ec-base-fold theme1 eToggle">
+            <div class="title">
+                <h2>수령자 정보</h2>
+            </div>
+            <div class="contents">
+                <!-- 기본 정보 -->
+                <div class="ec-base-prdInfo">
+                    <h3 class="hasBtn">
+                        <span>기본정보</span>
+                        <div class="gRight">
+                             <a id="{$receiverUpdateId}" href="#none" class="btnNormal mini {$receiver_update_button_display|display}" title="새창 열림"><span>변경</span></a>
+                             <a href="#none" class="btnNormal mini {$not_receiver_update_button_display|display}" title="새창 열림" onclick="{$action_receiver_update_button}"><span class="txtWarn">변경불가</span></a>
+                        </div>
+                    </h3>
+                    <br>
+                    <div>
+                        <p>
+                            <span>{$expected_delivery_datetime} <span class="{$display_expected_delivery_datetime|display}">배송시작부터</span></span>
+                        </p>
+                    </div>
+                    <br>
+                    <div class="ec-base-table typeWrite">
+                        <br>
+                        <div>
+                            <p>{$receiver_name} </p>
+                            <p class="{$oversea_delv_display|display}">받으시는분(영문): {$receiver_name_en}</p>
+                            <p class="{$oversea_delv_display|display}">받으시는분(발음기호): {$receiver_name_phonetic}</p>
+                            <p class="{$oversea_delv_display|display}">국가: {$country_name}</p>
+                            <p class="{$display_addr|display}">[{$receiver_zipcode}]{$receiver_address}</p>
+                            <p>{$receiver_phone}/{$receiver_cell} </p>
+                            <p class="{$display_store_pickup_info|display}"><strong>{$store_pickup.receive_place_name}</strong></p>
+                            <p class="{$display_store_pickup_info|display}">- 주소 : {$store_pickup.receiver_address}</p>
+                            <p class="{$display_store_pickup_info|display}">- 전화번호 : {$store_pickup.main_phone}</p>
+                            <p class="{$display_store_pickup_info|display}">- 영업시간 : {$store_pickup.office_hour}</p>
+                            <p class="{$display_store_pickup_info|display}">- 수령 가능일 : {$store_pickup.receive_period}</p>
+                            <p class="{$display_store_pickup_info|display}">- 수령지 안내 : {$store_pickup.receive_info}</p>
+                            <p class="{$oversea_delv_display|display}">도시: {$receiver_city}</p>
+                            <p class="{$oversea_delv_display|display}">주/지방: {$receiver_state}</p>
+                        </div>
+                        <br>
+                        <div>
+                            <p>배송메시지 : {$delivery_msg}</p>
+                            <p class="{$hope_shipping_time_display|display}">희망배송시간: {$hope_shipping_time}</p>
+                            <p class="{$hope_shipping_company_name_display|display}">희망배송업체/방식: {$hope_shipping_company_name}</p>
+                        </div>
+                        <br>
+                    </div>
+                    <div class="prdFoot"></div>
+                </div>
+
+                <!-- 배송전 주문 있음-->
+                <div module="myshop_SubscriptionShippingList">
+                    <div class="ec-base-prdInfo">
+                        <h3 class="hasBtn">
+                            <span>배송 예정 정보</span>
+                            <div class="gRight">
+                                 <a href="#none" class="btnNormal mini {$receiver_update_button_display|display}" title="새창 열림" onclick="{$action_receiver_update_button}"><span>변경</span></a>
+                                 <a href="#none" class="btnNormal mini {$not_receiver_update_button_display|display}" title="새창 열림" onclick="{$action_receiver_update_button}"><span class="txtWarn">변경불가</span></a>
+                            </div>
+                        </h3>
+                        <br>
+                        <div>
+                            <p>{$product_name}</p>
+                            <p>
+                                <span>적용회차 : </span> <span>[{$subscription_pay_seq}회차] </span> <span>{$expected_delivery_datetime} <span class="{$display_expected_delivery_datetime|display}">배송시작</span></span>
+                            </p>
+                        </div>
+                        <br>
+                        <div class="ec-base-table typeWrite">
+                            <br>
+                            <div>
+                                <p>{$receiver_name}</p>
+                                <p class="{$oversea_delv_display|display}">받으시는분(영문): {$receiver_name_en}</p>
+                                <p class="{$oversea_delv_display|display}">받으시는분(발음기호): {$receiver_name_phonetic}</p>
+                                <p class="{$oversea_delv_display|display}">국가: {$country_name}</p>
+                                <p class="{$display_addr|display}">[{$receiver_zipcode}]{$receiver_full}</p>
+                                <p>{$receiver_phone}/{$receiver_cell}</p>
+                                <p class="{$display_store_pickup_info|display}"><strong>{$store_pickup.receive_place_name}</strong></p>
+                                <p class="{$display_store_pickup_info|display}">- 주소 : {$store_pickup.receiver_address}</p>
+                                <p class="{$display_store_pickup_info|display}">- 전화번호 : {$store_pickup.main_phone}</p>
+                                <p class="{$display_store_pickup_info|display}">- 영업시간 : {$store_pickup.office_hour}</p>
+                                <p class="{$display_store_pickup_info|display}">- 수령 가능일 : {$store_pickup.receive_period}</p>
+                                <p class="{$display_store_pickup_info|display}">- 수령지 안내 : {$store_pickup.receive_info}</p>
+                                <p class="{$oversea_delv_display|display}">도시: {$receiver_city}</p>
+                                <p class="{$oversea_delv_display|display}">주/지방: {$receiver_state}</p>
+                            </div>
+                            <br>
+                            <div>
+                                <p>배송메시지 : {$delivery_msg}</p>
+                                <p class="{$hope_shipping_time_display|display}">희망배송시간: {$hope_shipping_time}</p>
+                                <p class="{$hope_shipping_company_name_display|display}">희망배송업체/방식: {$hope_shipping_company_name}</p>
+                            </div>
+                            <br>
+                        </div>
+                        <div class="prdFoot {$is_not_last|display}"></div>
+                    </div>
+                    <div class="ec-base-prdInfo">
+                        <h3 class="hasBtn">
+                            <span>배송 예정 정보</span>
+                            <div class="gRight">
+                                <a href="#none" class="btnNormal mini {$receiver_update_button_display|display}" title="새창 열림" onclick="{$action_receiver_update_button}"><span>변경</span></a>
+                                <a href="#none" class="btnNormal mini {$not_receiver_update_button_display|display}" title="새창 열림" onclick="{$action_receiver_update_button}"><span class="txtWarn">변경불가</span></a>
+                            </div>
+                        </h3>
+                        <br>
+                        <div>
+                            <p>{$product_name}</p>
+                            <p>
+                                <span>적용회차 : </span> <span>[{$subscription_pay_seq}회차] </span> <span>{$expected_delivery_datetime} <span class="{$display_expected_delivery_datetime|display}">배송시작</span></span>
+                            </p>
+                        </div>
+                        <br>
+                        <div class="ec-base-table typeWrite">
+                            <br>
+                            <div>
+                                <p>{$receiver_name}</p>
+                                <p class="{$oversea_delv_display|display}">받으시는분(영문): {$receiver_name_en}</p>
+                                <p class="{$oversea_delv_display|display}">받으시는분(발음기호): {$receiver_name_phonetic}</p>
+                                <p class="{$oversea_delv_display|display}">국가: {$country_name}</p>
+                                <p class="{$display_addr|display}">[{$receiver_zipcode}]{$receiver_full}</p>
+                                <p>{$receiver_phone}/{$receiver_cell}</p>
+                                <p class="{$display_store_pickup_info|display}"><strong>{$store_pickup.receive_place_name}</strong></p>
+                                <p class="{$display_store_pickup_info|display}">- 주소 : {$store_pickup.receiver_address}</p>
+                                <p class="{$display_store_pickup_info|display}">- 전화번호 : {$store_pickup.main_phone}</p>
+                                <p class="{$display_store_pickup_info|display}">- 영업시간 : {$store_pickup.office_hour}</p>
+                                <p class="{$display_store_pickup_info|display}">- 수령 가능일 : {$store_pickup.receive_period}</p>
+                                <p class="{$display_store_pickup_info|display}">- 수령지 안내 : {$store_pickup.receive_info}</p>
+                                <p class="{$oversea_delv_display|display}">도시: {$receiver_city}</p>
+                                <p class="{$oversea_delv_display|display}">주/지방: {$receiver_state}</p>
+                            </div>
+                            <br>
+                            <div>
+                                <p>배송메시지 : {$delivery_msg}</p>
+                                <p class="{$hope_shipping_time_display|display}">희망배송시간: {$hope_shipping_time}</p>
+                                <p class="{$hope_shipping_company_name_display|display}">희망배송업체/방식: {$hope_shipping_company_name}</p>
+                            </div>
+                            <br>
+                        </div>
+                        <div class="prdFoot {$is_not_last|display}"></div>
+                    </div>
+                </div>
+                <div class="ec-base-prdInfo {$receiver_update_all_display|display}">
+                    <div class="prdFoot hasBtn">
+                        <div class="gRight">
+                            <a id="ec-shop-receiver_update_id_all" href="#none" class="btnNormal mini {$receiver_update_all_display|display}" title="새창 열림">전체 변경</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 배송전 주문 없음-->
+                <div class="ec-base-prdInfo {$subscription_shipping_list_empty_display|display}">
+                    <h3 class="hasBtn"><span>배송 예정 정보</span></h3>
+                    <br>
+                    <div class="ec-base-table typeWrite">
+                        <table>
+                            <caption>수령자 정보</caption>
+                            <br>
+                            <tbody>
+                            배송 예정 정보는 배송시작일 이틀 전부터 확인할 수 있습니다.
+                            </tbody>
+                        </table>
+                        <br>
+                    </div>
+                    <div class="prdFoot hasBtn">
+                        <br>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="ec-base-button gColumn">
+        <a href="regular_delivery.html" class="btnEm">목록</a>
+        <a href="#none" class="btnSubmit" onclick="{$action_check}">저장하기</a>
+    </div>
+    <ul class="ec-base-help {$regular_delivery_notice_display|display}">
+        <li>정기배송 상세정보에서 옵션 변경 후 저장 버튼을 클릭하면, 다음 배송예정일부터 변경한 옵션으로 배송이 진행됩니다.</li>
+        <li>현재 진행 중인 회차에서 옵션 변경을 원하는 경우, [주문내역조회]에서 교환신청을 진행해 주세요.</li>
+    </ul>
+</div>

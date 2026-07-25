@@ -1,0 +1,40 @@
+<div module="MyShop_OrderHistoryMultiinvoice" id="{$multi_invoice_layer_id}" class="ec-base-layer typeInvoice">
+    <h1 class="left">배송 정보</h1>
+    <div class="wrap">
+        <p>상품이 총 {$multi_invoice_count}개의 송장번호로 배송됩니다.</p>
+        <div class="ec-base-table gBorder">
+            <table border="1" summary="">
+                <caption>주문 상품 정보</caption>
+                <colgroup>
+                    <col style="width:100px;">
+                    <col style="width:138px;">
+                    <col style="width:auto;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col">배송업체</th>
+                        <th scope="col">송장번호</th>
+                        <th scope="col">수량</th>
+                    </tr>
+                </thead>
+                <tbody module="Myshop_MultiInvoice" class="center">
+                    <tr>
+                        <td>{$shipping_company}</td>
+                        <td class="number">
+                            <a href="#none" onclick="{$shipping_trace_popup}">{$invoice_no}</a>
+                        </td>
+                        <td>{$quantity}</td>
+                    </tr>
+                    <tr>
+                        <td>{$shipping_company}</td>
+                        <td class="number">
+                            <a href="#none" onclick="{$shipping_trace_popup}">{$invoice_no}</a>
+                        </td>
+                        <td>{$quantity}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <a href="#none" class="btnClose" onclick="{$close_btn}">닫기</a>
+</div>

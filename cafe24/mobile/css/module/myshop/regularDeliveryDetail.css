@@ -1,0 +1,56 @@
+.xans-myshop-orderregularmanagedetailregister .ec-base-table td.status span { font-weight:bold; color:#C12C20; }
+.xans-myshop-orderregularmanagedetailregister .ec-base-table td.status .payMethod { margin-bottom:4px; }
+
+.xans-myshop-orderregularmanagedetailregister,
+.xans-myshop-orderregularmanagedetaillist { padding:7px; }
+.xans-myshop-orderregularmanagedetaillist:first-of-type { padding-top:14px; }
+.xans-myshop-orderregularmanagedetaillist .ec-base-table table th,
+.xans-myshop-orderregularmanagedetaillist .ec-base-table table td { vertical-align:top; }
+.xans-myshop-orderregularmanagedetaillist .ec-base-table.typeWrite th,
+.xans-myshop-orderregularmanagedetaillist .ec-base-table.typeWrite td { line-height:20px; }
+.xans-myshop-orderregularmanagedetaillist .ec-base-table table  td.hasBtn { line-height: 25px; }
+.xans-myshop-orderregularmanagedetaillist .fSelect { width:100%; }
+.xans-myshop-orderregularmanagedetaillist .txtLess { color:#757575; }
+.xans-myshop-orderregularmanagedetaillist .txtDel { text-decoration:line-through; color:#b8b8b8; }
+.xans-myshop-orderregularmanagedetaillist .badge { display:inline-block; position:relative; top:-1px; height:18px; margin:0 0 0 2px; padding:0 6px; border-radius:10px; line-height:18px; font-size:11px; color:#fff; background-color:#009ffa; }
+.xans-myshop-orderregularmanagedetaillist .badge .icoDown { display:inline-block; position:relative; top:1px; overflow:hidden; width:8px; height:12px; margin:0 0 0 3px; border-radius:50%; line-height:10px; text-indent:-9999px; }
+.xans-myshop-orderregularmanagedetaillist .badge .icoDown:before { content:""; display:inline-block; position:absolute; top:3px; left:2px; width:4px; height:4px; background-color:#fff; }
+.xans-myshop-orderregularmanagedetaillist .badge .icoDown:after { content:""; display:inline-block; position:absolute; bottom:1px; left:0; width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:4px solid #fff; }
+.xans-myshop-orderregularmanagedetaillist .datepicker { position:relative; overflow:hidden; font-size: 13px;  font-weight: inherit;  color: #353535;  border: 1px solid #d7d5d5;  border-radius: 2px;  outline-style: none;  -moz-box-sizing: border-box;  -webkit-box-sizing: border-box;  box-sizing: border-box; }
+.xans-myshop-orderregularmanagedetaillist .datepicker button.ui-datepicker-trigger { position:absolute; top:3px; right:10px; width:20px; border:none; cursor:pointer; background:none; }
+.xans-myshop-orderregularmanagedetaillist .datepicker input.hasDatepicker { cursor:pointer; width:100%; padding:10px 20px 10px 10px; border:0; }
+.xans-myshop-orderregularmanagedetaillist .datepicker .inputDelivery { width:100%; border:none; }
+.xans-myshop-orderregularmanagedetaillist .datepicker + p { margin:8px 0 8px; }
+.xans-myshop-orderregularmanagedetaillist .ec-base-prdInfo .prdBox + .ec-base-table { border-top:1px solid #ececec; }
+.xans-myshop-orderregularmanagedetaillist .ec-base-prdInfo .option > li .name { flex-wrap:wrap }
+.xans-myshop-orderregularmanagedetaillist .userInfo .gRight { float:right; text-align:right; }
+.xans-myshop-orderregularmanagedetaillist .userInfo .gRight:after { content:""; display:block; clear:both; }
+.xans-myshop-orderregularmanagedetaillist .userInfo .contents .ec-base-table {border-top: 2px solid #ececec}
+
+/* 옵션변경 레이어 */
+.layerOptionModify { width:auto; margin:7px 0; padding:14px; border:1px solid #d5d5d5; background-color:#f1f1f1; }
+.layerOptionModify .titleArea { margin-top:3px; display:none; }
+.layerOptionModify .ec-base-button { margin:20px 0 0; }
+.layerOptionModify ul { padding:0; font-size:12px; }
+.layerOptionModify li { position:relative; margin:7px 0 0; padding:0 0 0 73px; }
+.layerOptionModify li:first-child { margin:0; }
+.layerOptionModify li span { display:block; position:absolute; top:0; left:0; width:73px; height:29px; font-size:13px; color:#757575; line-height:29px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.layerOptionModify select,
+.layerOptionModify input[type="text"] { width:100%; }
+.layerOptionModify .button { margin:7px 0 0; padding:0; text-align:center; }
+.layerOptionModify .button .btnBasic1 { color:#fff; }
+
+.xans-myshop-orderregularmanagedetailregister .cardList { gap:20px; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status .type,
+.xans-myshop-orderregularmanagedetailregister .cardList li.status span { color:#353535; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status span { font-weight:normal; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status {display: flex; justify-content: space-between; align-items: center; gap:10px; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status .cardInfo { flex:1; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status .button { flex:1; min-width: auto; }
+.xans-myshop-orderregularmanagedetailregister .cardList li.status .button [class^='btn'] { display: block; }
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status .cardNumber { display:none; }
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status.done .type { display: block; margin-bottom:10px; }
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status.done .cardNumber { display:inline-block; margin:0; }
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status.done { flex-direction: column; align-items: stretch; }
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status.done .button { display:flex; gap:10px;}
+.xans-myshop-orderregularmanagedetailregister .cardList.registed li.status.done .button [class^='btn'] { flex:1; }

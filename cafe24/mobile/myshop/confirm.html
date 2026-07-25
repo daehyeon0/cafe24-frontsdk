@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=yes">
+    <title>주문완료</title>
+    <!--@css(/css/module/myshop/purchase.css)-->
+</head>
+<body>
+<header id="header">
+    <div class="header">
+        <h1 module="Layout_LogoTop"><a href="/">Stripe</a></h1>
+    </div>
+</header>
+
+<div module="Myshop_OrderConfirm">
+    <div id="mPurchase" class="contents">
+        <!-- 아이콘 영역 -->
+        <div class="iconWrap {$icon_display|display}">
+            <span class="iconCheck {$icon_check_display|display}"></span>
+            <span class="iconBell {$icon_bell_display|display}"></span>
+            <span class="iconError {$icon_error_display|display}"></span>
+        </div>
+        <!-- end 아이콘 영역 -->
+
+        <div class="titleWrap">
+            <p class="order_no">주문번호 : {$order_id}</p>
+
+            <div class="{$purchase_confirm_display|display}">
+                <h2>구매를 확정해 주세요</h2>
+                <span class="infoMessage displaynone"></span>
+            </div>
+
+            <div class="partPurchaseConfirm {$part_item_confirm_display|display}">
+                <h2>구매가 확정되었어요</h2>
+                <span class="infoMessage">구매 확정할 수 있는 상품이 남아 있어요.</span>
+            </div>
+
+            <div class="{$all_item_confirm_display|display}">
+                <h2>모든 구매가 확정되었어요</h2>
+                <span class="infoMessage">쇼핑몰을 조금 더 둘러보시겠어요?</span>
+            </div>
+
+            <div class="expireURl1 {$expire_url_display|display}">
+                <h2>URL을 다시 받아주세요</h2>
+                <span class="infoMessage">7일이 지나 구매 확정 페이지가 만료되었어요.<br/>구매 확정할 수 있는 URL을 받아 다시 접속해 주세요.</span>
+            </div>
+
+            <div class="expireURl2 {$expire_url_two_display|display}">
+                <h2>URL이 발송되었어요 <br/>새로 발송된 URL로 접속해 주세요</h2>
+                <span class="infoMessage">알림톡·SMS로 URL을 새로 발송해 드렸어요.<br/>새로 발송된 URL로 접속해 주세요.</span>
+            </div>
+
+            <div class="{$no_item_display|display}">
+                <h2>구매 확정할 상품이 없어요</h2>
+                <span class="infoMessage">추가 문의가 있으시면 고객센터를 이용해 주세요.</span>
+            </div>
+
+        </div>
+
+        <div class="btnShopMove {$move_main_btn_display|display}">
+            <button type="button" onclick="location.href='/'">쇼핑몰로 이동하기</button>
+        </div>
+
+        <div class="product_list_wrap {$item_class}">
+            <div class="allChk">
+                <label class="gLabel"><input type="checkbox" name="checkAllSell" id="checkAllSell" class="fChk"><strong>전체선택</strong>
+                    (<strong class="count"></strong>/<span class="total">{$possible_count}</span>)</label>
+            </div>
+            <div class="product_list {$item_display|display}">
+                <h3>구매 확정할 수 있는 상품</h3>
+                <div class="productConfirm {$part_item_display|display}">
+                    <a href="#none">일부 상품만 구매 확정하기</a>
+                </div>
+                <ul module="Myshop_items">
+                    <li>
+                        <div class="checkBox">
+                            <label class="gLabel"><input type="checkbox" class="fChk"
+                                                         value="{$order_item_code}"></label>
+                        </div>
+                        <div class="thumbnail"><a href="#none"><img src="{$product_thumbnail}" alt="" width="90"
+                                                                    height="90"></a></div>
+                        <div class="list_info">
+                            <div class="productName">{$product_name}</div>
+                            <span class="quantity">{$quantity}개</span>
+                            <div module="Myshop_optionSet">
+                                <div class="description {$product_bundle_class}">
+                                    <span class="optName {$option_product_name|display}">{$option_product_name}</span>
+                                    <div class="optionWrap">
+                                        <span class="option">{$option_str}</span>
+                                        <span class="quantity">{$qty}</span>
+                                    </div>
+                                    <div class="addOption areaBox {$additional_option_value|display}">
+                                        <span class="contents">{$additional_option_value}</span>
+                                    </div>
+                                </div>
+                                <div class="description {$product_bundle_class}">
+                                    <span class="optName {$option_product_name|display}">{$option_product_name}</span>
+                                    <div class="optionWrap">
+                                        <span class="option">{$option_str}</span>
+                                        <span class="quantity">{$qty}</span>
+                                    </div>
+                                    <div class="addOption areaBox {$additional_option_value|display}">
+                                        <span class="contents">{$additional_option_value}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="checkBox">
+                            <label class="gLabel"><input type="checkbox" class="fChk" value="{$order_item_code}"></label>
+                        </div>
+                        <div class="thumbnail"><a href="#none"><img src="{$product_thumbnail}" alt="" width="90" height="90"></a></div>
+                        <div class="list_info">
+                            <div class="productName">{$product_name}</div>
+
+                            <div module="Myshop_optionSet">
+                                <div class="description {$product_bundle_class}">
+                                    <span class="optName {$option_product_name|display}">{$option_product_name}</span>
+                                    <div class="optionWrap">
+                                        <span class="option">{$option_str}</span>
+                                        <span class="quantity">{$qty}</span>
+                                    </div>
+                                    <div class="addOption areaBox {$additional_option_value|display}">
+                                        <span class="contents">{$additional_option_value}</span>
+                                    </div>
+                                </div>
+                                <div class="description {$product_bundle_class}">
+                                    <span class="optName {$option_product_name|display}">{$option_product_name}</span>
+                                    <div class="optionWrap">
+                                        <span class="option">{$option_str}</span>
+                                        <span class="quantity">{$qty}</span>
+                                    </div>
+                                    <div class="addOption areaBox {$additional_option_value|display}">
+                                        <span class="contents">{$additional_option_value}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span class="quantity">{$quantity}개</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="purchase_base-button {$main_btn_display|display}">
+            <div class="{$purchase_confirm_btn_display|display}">
+                <button type="button" class="btnSubmit purchaseConfirmBtn">구매 확정하기</button>
+                <span class="message">구매 확정하면 교환, 반품을 신청할 수 없어요.</span>
+            </div>
+            <div class="{$remain_item_btn_display|display}">
+                <button type="button" class="btnSubmit remainItemList">남은 상품 구매 확정하기</button>
+            </div>
+            <div class="{$expire_url_btn_display|display}">
+                <button type="button" class="btnSubmit resendNotificationBtn">알림톡·SMS로 받기</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
