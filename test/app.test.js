@@ -25,25 +25,48 @@ async function startServer(app) {
   return `http://127.0.0.1:${port}`;
 }
 
-test('GET / returns 200 OK', async () => {
+test('GET / renders a Cafe24 OAuth request button', async () => {
   const app = createApp();
   const baseUrl = await startServer(app);
 
   const response = await fetch(baseUrl);
+  const html = await response.text();
 
   assert.equal(response.status, 200);
-  assert.equal(await response.text(), 'OK');
+  assert.match(response.headers.get('content-type'), /^text\/html;/);
+  assert.match(
+    html,
+    /<form method="get" action="https:\/\/df6d\.cafe24api\.com\/api\/v2\/oauth\/authorize">/,
+  );
+  assert.match(
+    html,
+    /<input type="hidden" name="response_type" value="code">/,
+  );
+  assert.match(
+    html,
+    /<input type="hidden" name="client_id" value="F79PeGqf20Le8Hvh63GfCA">/,
+  );
+  assert.match(
+    html,
+    /<input type="hidden" name="state" value="886321e3baf3">/,
+  );
+  assert.match(
+    html,
+    /<input type="hidden" name="redirect_uri" value="https:\/\/cafe24-frontsdk\.vercel\.app\/oauth\/authorize">/,
+  );
+  assert.match(
+    html,
+    /<input type="hidden" name="scope" value="mall\.write_order,mall\.read_application">/,
+  );
+  assert.match(html, /<button type="submit">Cafe24 OAuth 인증<\/button>/);
 });
 
 test('the default export handles requests as an Express application', async () => {
   const baseUrl = await startServer(app);
 
-  const response = await fetch(baseUrl, {
-    signal: AbortSignal.timeout(500),
-  });
+  const response = await fetch(`${baseUrl}/script-ignis.js`);
 
   assert.equal(response.status, 200);
-  assert.equal(await response.text(), 'OK');
 });
 
 test('GET /script-ignis.js serves the static JavaScript file', async () => {
