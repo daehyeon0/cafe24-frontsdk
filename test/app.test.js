@@ -25,6 +25,16 @@ async function startServer(app) {
   return `http://127.0.0.1:${port}`;
 }
 
+test('GET / returns 200 OK', async () => {
+  const app = createApp();
+  const baseUrl = await startServer(app);
+
+  const response = await fetch(baseUrl);
+
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'OK');
+});
+
 test('GET /oauth/authorize logs the raw query string', async () => {
   const logs = [];
   const app = createApp({

@@ -11,6 +11,10 @@ export default function createApp({ logger = console } = {}) {
 
   app.disable('x-powered-by');
 
+  app.get('/', (_req, res) => {
+    res.status(200).send('OK');
+  });
+
   app.get('/oauth/authorize', (req, res) => {
     const queryString = getRawQueryString(req.originalUrl);
 
