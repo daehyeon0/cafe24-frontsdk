@@ -33,6 +33,7 @@
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
   var UNSELECTED_QUANTITY_VALUE = -1;
   var selectedQuantity = UNSELECTED_QUANTITY_VALUE; // -1: 미선택, 10, 30, 50, 100: 각 수량
+  var selectedFlavor = {};
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
@@ -119,8 +120,9 @@
     return element;
   }
 
-  function updateOptionPicker(picker) {
+  function updateQuantityOptionPicker(picker) {
     picker.querySelectorAll('.ignis-quantity-option').forEach(function (button) {
+      console.log(Number(button.dataset.quantity), selectedQuantity)
       button.classList.toggle(
         'is-selected',
         Number(button.dataset.quantity) === selectedQuantity,
@@ -137,8 +139,22 @@
     });
   }
 
-  function handleClickQuantity(picker, groups, quantity) {
-    var options = groups.get(Number(quantity));
+  function handleClickQuantity(quantity) {
+    var picker = document.querySelector('.ignis-quantity-picker');
+    var nextQuantity = Number(quantity);
+
+    if (nextQuantity === UNSELECTED_QUANTITY_VALUE) {
+      selectedQuantity = nextQuantity;
+      updateQuantityOptionPicker(picker);
+      updateFlavorOptionPicker();
+      return;
+    }
+
+    var sourceList = document.querySelector(
+      '.ec-product-button[data-ignis-quantity-enhanced]',
+    );
+    var groups = sourceList && getQuantityGroups(sourceList);
+    var options = groups && groups.get(nextQuantity);
 
     if (!options) {
       console.error('[handleClickQuantity]: not expected quantity');
@@ -147,17 +163,16 @@
 
     var selectableOption = options.find(function (option) {
       return !option.element.classList.contains('ec-product-selected');
-    })
-    var alreadySelectedAllOptions = !selectableOption;
+    });
 
-    if (isUnavailable(options) || alreadySelectedAllOptions) {
+    if (isUnavailable(options) || !selectableOption) {
       window.alert('선택할 수 없는 수량입니다.');
       return;
     }
 
-    selectedQuantity = Number(quantity);
-    updateOptionPicker(picker);
-    // selectableOption.querySelector('a').click();
+    selectedQuantity = nextQuantity;
+    updateQuantityOptionPicker(picker);
+    updateFlavorOptionPicker();
   }
 
   function createQuantityButton(quantity, config) {
@@ -289,7 +304,7 @@
         return;
       }
 
-      handleClickQuantity(picker, groups, button.dataset.quantity);
+      handleClickQuantity(button.dataset.quantity);
     });
 
   }
@@ -310,8 +325,156 @@
     }
   }
 
-  function createFlavorOptions() {
+  function getSelectedFlavorTotal() {
+    return Object.keys(selectedFlavor).reduce(function (sum, index) {
+      return sum + selectedFlavor[index];
+    }, 0);
+  }
 
+  function updateFlavorOptionPicker() {
+    var flavorOptions = document.querySelector('.ignis-flavor-options');
+
+    if (!flavorOptions) {
+      return;
+    }
+
+    flavorOptions.dataset.hidden = String(
+      selectedQuantity === UNSELECTED_QUANTITY_VALUE,
+    );
+    flavorOptions.querySelectorAll('.ignis-flavor-option').forEach(
+      function (option) {
+        var output = option.querySelector('output');
+
+        if (output) {
+          output.textContent = String(selectedFlavor[option.dataset.index] || 0);
+        }
+      },
+    );
+
+    var total = getSelectedFlavorTotal();
+
+    flavorOptions.querySelector('.ignis-flavor-total strong').textContent =
+      `(${total * 10}/${selectedQuantity}개)`;
+    flavorOptions.querySelector('.ignis-flavor-confirm').disabled = total * 10 !== selectedQuantity;
+  }
+
+  function createFlavorOptions() {
+    var picker = document.querySelector('.ignis-quantity-picker');
+    var flavorOptions = document.querySelector('.ignis-flavor-options');
+
+    if (!picker || flavorOptions) {
+      return;
+    }
+
+    var flavors = [
+      {
+        title: '떡볶이맛 (10개입)',
+        description: '130kcal, 단백질 18g',
+        highlight: '신제품 출시!',
+        isSoldout: false,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_떡볶이맛전면_원본_0524.png',
+      },
+      {
+        title: '버터치킨커리맛 (10개입)',
+        description: '105kcal, 단백질 18g',
+        highlight: '',
+        isSoldout: true,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_버터치킨커리맛(전면).png',
+      },
+      {
+        title: '핫양념치킨맛 (10개입)',
+        description: '125kcal, 단백질 19g',
+        highlight: '',
+        isSoldout: false,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_핫양념치킨맛전면_원본_0524.png',
+      },
+      {
+        title: '치폴레마요맛 (10개입)',
+        description: '125kcal, 단백질 18g',
+        highlight: '',
+        isSoldout: false,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_치폴레마요맛(전면).png',
+      },
+      {
+        title: '허니소이맛 (10개입)',
+        description: '125kcal, 단백질 18g',
+        highlight: '',
+        isSoldout: false,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_허니소이전면_원본_0814.png',
+      },
+      {
+        title: '왕갈비맛 (10개입)',
+        description: '125kcal, 단백질 18g',
+        highlight: '',
+        isSoldout: false,
+        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_왕갈비맛전면_원본.png',
+      },
+    ];
+
+    var options = flavors
+      .map(function (flavor, index) {
+        return '<li class="ignis-flavor-option' +
+          (flavor.isSoldout ? ' is-soldout' : '') +
+          '" data-index="' + index + '">' +
+          '<img class="ignis-flavor-image" src="' + flavor.img + '" alt="' + flavor.title + '">' +
+          '<span class="ignis-flavor-copy">' +
+          (flavor.highlight ? '<em>' + flavor.highlight + '</em>' : '') +
+          '<strong>' + flavor.title + '</strong>' +
+          '<small>' + flavor.description + '</small></span>' +
+          (flavor.isSoldout
+            ? '<span class="ignis-flavor-soldout">품절</span>'
+            : '<span class="ignis-flavor-stepper">' +
+              '<button type="button" data-change="-1" aria-label="수량 감소">−</button>' +
+              '<output>0</output>' +
+              '<button type="button" data-change="1" aria-label="수량 증가">＋</button>' +
+              '</span>') +
+          '</li>';
+      })
+      .join('');
+    var sheet = document.createElement('section');
+
+    sheet.className = 'ignis-flavor-options';
+    sheet.dataset.hidden = 'true';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', '50개입 맛 선택');
+    sheet.innerHTML =
+      '<div class="ignis-flavor-sheet">' +
+      '<header><strong>50개입 맛 선택</strong><button type="button" data-close aria-label="닫기">×</button></header>' +
+      '<ul>' + options + '</ul>' +
+      '<p class="ignis-flavor-total">총 수량 <strong>(0/30개)</strong></p>' +
+      '<button type="button" class="ignis-flavor-confirm" disabled>선택완료</button>' +
+      '</div>';
+
+    sheet.addEventListener('click', function (event) {
+      var closeButton = event.target.closest('[data-close]');
+      var changeButton = event.target.closest('[data-change]');
+
+      if (closeButton || event.target === sheet) {
+        handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
+        return;
+      }
+
+      if (!changeButton) {
+        return;
+      }
+
+      var option = changeButton.closest('.ignis-flavor-option');
+      var index = option.dataset.index;
+      var currentCount = selectedFlavor[index] || 0;
+      var otherCount = getSelectedFlavorTotal() - currentCount;
+      var maxCount = selectedQuantity / 10 - otherCount;
+      var count = Math.max(
+        0,
+        currentCount + Number(changeButton.dataset.change),
+      );
+
+      selectedFlavor[index] = Math.min(count, Math.max(0, maxCount));
+      updateFlavorOptionPicker();
+
+    });
+
+    picker.insertAdjacentElement('afterend', sheet);
   }
 
   function boot() {

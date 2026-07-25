@@ -356,3 +356,18 @@
     .ignis-quantity-badge,
     .ignis-quantity-status { font-size:9px; }
 }
+
+/* Ignis 맛 선택 */
+.ignis-flavor-options { width:100%; margin:8px 0; }
+.ignis-flavor-options[data-hidden="true"] { display:none; }
+.ignis-flavor-sheet { overflow:hidden; border:1px solid #eee; background:#fff; color:#222; font:12px/1.35 Arial,sans-serif; }
+.ignis-flavor-sheet header { display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 10px; background:#f5f5f5; }
+.ignis-flavor-sheet header button { border:0; background:transparent; color:#555; font-size:22px; cursor:pointer; }
+.ignis-flavor-sheet ul { margin:0; padding:5px 10px; list-style:none; }
+.ignis-flavor-option { display:flex; align-items:center; gap:9px; min-height:51px; }
+.ignis-flavor-option + .ignis-flavor-option { border-top: 1px solid #eee; }
+.ignis-flavor-image { flex:0 0 32px; width:32px; height:32px; object-fit:contain; }
+.ignis-flavor-copy { display:flex; min-width:0; flex:1; flex-direction:column; }.ignis-flavor-copy em { color:#f04a22; font-size:9px; font-style:normal; }.ignis-flavor-copy strong { font-size:11px; }.ignis-flavor-copy small { color:#999; font-size:9px; }.ignis-flavor-option.is-soldout { opacity:.45; }.ignis-flavor-soldout { color:#999; font-size:11px; }
+.ignis-flavor-stepper { display:flex; overflow:hidden; border:1px solid #ddd; border-radius:3px; }.ignis-flavor-stepper button,.ignis-flavor-stepper output { width:27px; height:21px; border:0; background:#fff; color:#555; line-height:21px; text-align:center; }.ignis-flavor-stepper button { cursor:pointer; }.ignis-flavor-stepper button + output { border-right:1px solid #eee; border-left:1px solid #eee; }
+.ignis-flavor-total { margin:0; padding:9px 10px; border-top:1px solid #eee; text-align:right; }.ignis-flavor-total strong { color:#ed4e20; }
+.ignis-flavor-confirm { width:calc(100% - 12px); height:30px; margin:0 6px 7px; border:0; border-radius:2px; background:#ef4d28; color:#fff; }.ignis-flavor-confirm:disabled { background:#ddd; color:#999; }
