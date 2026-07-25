@@ -1,4 +1,7 @@
 import express from 'express';
+import { fileURLToPath } from 'node:url';
+
+const publicPath = fileURLToPath(new URL('../public', import.meta.url));
 
 export function getRawQueryString(originalUrl) {
   const queryStartIndex = originalUrl.indexOf('?');
@@ -10,6 +13,7 @@ export function createApp({ logger = console } = {}) {
   const app = express();
 
   app.disable('x-powered-by');
+  app.use(express.static(publicPath));
 
   app.get('/', (_req, res) => {
     res.status(200).send('OK');

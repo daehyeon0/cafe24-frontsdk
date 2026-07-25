@@ -46,6 +46,23 @@ test('the default export handles requests as an Express application', async () =
   assert.equal(await response.text(), 'OK');
 });
 
+test('GET /script-ignis.js serves the static JavaScript file', async () => {
+  const app = createApp();
+  const baseUrl = await startServer(app);
+
+  const response = await fetch(`${baseUrl}/script-ignis.js`);
+
+  assert.equal(response.status, 200);
+  assert.match(
+    response.headers.get('content-type'),
+    /^text\/javascript; charset=utf-8$/,
+  );
+  assert.equal(
+    await response.text(),
+    '// Ignis browser script entry point.\n',
+  );
+});
+
 test('GET /oauth/authorize logs the raw query string', async () => {
   const logs = [];
   const app = createApp({
