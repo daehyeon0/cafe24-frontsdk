@@ -44,6 +44,7 @@ async function createQuantityPage({
       <html lang="ko">
         <head></head>
         <body>
+          <div id="product-data">{"price": 3290}</div>
           <div class="xans-product-option">
             <table>
               <tbody>

@@ -4,14 +4,10 @@
   var QUANTITY_OPTIONS = Object.freeze({
     10: Object.freeze({
       price: 24700,
-      discountRate: 25,
-      unitPrice: 2470,
       badge: null,
     }),
     30: Object.freeze({
       price: 70500,
-      discountRate: 29,
-      unitPrice: 2350,
       badge: Object.freeze({
         bgColor: '#fff0ee',
         textColor: '#b72b25',
@@ -20,14 +16,10 @@
     }),
     50: Object.freeze({
       price: 111500,
-      discountRate: 32,
-      unitPrice: 2230,
       badge: null,
     }),
     100: Object.freeze({
       price: 196000,
-      discountRate: 41,
-      unitPrice: 1960,
       badge: Object.freeze({
         bgColor: '#fff0ee',
         textColor: '#b72b25',
@@ -46,6 +38,25 @@
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
+  }
+
+  function getOriginalPrice() {
+    var productDataElement = document.querySelector('#product-data');
+
+    if (!productDataElement) {
+      return null;
+    }
+
+    try {
+      var productData = JSON.parse(productDataElement.textContent);
+      var originalPrice = Number(productData.price);
+
+      return Number.isFinite(originalPrice) && originalPrice > 0
+        ? originalPrice
+        : null;
+    } catch (_error) {
+      return null;
+    }
   }
 
   function getClientId() {
@@ -166,7 +177,7 @@
     var discount = createElement(
       'span',
       'ignis-quantity-discount',
-      '(' + config.discountRate + '% 할인)',
+      '(' + config.discountPercentage + '% 할인)',
     );
     var unit = createElement(
       'span',
@@ -489,7 +500,7 @@
     setSelectedQuantity(picker, selectedQuantity);
   }
 
-  function createPicker(sourceList, groups) {
+  function createPicker(sourceList, groups, originalPrice) {
     var row = sourceList.closest('tr');
     var cell = sourceList.closest('td');
 
@@ -527,8 +538,24 @@
         return left - right;
       })
       .forEach(function (quantity) {
+        var option = QUANTITY_OPTIONS[quantity];
+
+        var unitPrice = option.price / quantity;
+        var totalPriceBeforeSale = (originalPrice / 10) * quantity;
+
+        var discountRate = (1 - option.price / totalPriceBeforeSale)
+        var discountPercentage = Math.round(
+           discountRate * 100,
+        );
+
         panel.append(
-          createQuantityButton(quantity, QUANTITY_OPTIONS[quantity]),
+          createQuantityButton(
+            quantity,
+            Object.assign({}, option, {
+              discountPercentage,
+              unitPrice,
+            }),
+          ),
         );
       });
 
@@ -595,15 +622,16 @@
 
   function enhanceQuantityOptions() {
     var optionSource = document.querySelector(OPTION_SOURCE_SELECTOR);
+    var originalPrice = getOriginalPrice();
 
-    if (!optionSource) {
+    if (!optionSource || originalPrice === null) {
       return;
     }
 
     var groups = getQuantityGroups(optionSource);
 
     if (groups) {
-      createPicker(optionSource, groups);
+      createPicker(optionSource, groups, originalPrice);
     }
   }
 
