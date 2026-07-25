@@ -322,9 +322,9 @@
 .ignis-quantity-header:focus-visible,
 .ignis-quantity-option:focus-visible { outline:2px solid #1769d2; outline-offset:2px; }
 .ignis-quantity-chevron { width:7px; height:7px; margin:3px 3px 0 12px; border-top:1.5px solid currentColor; border-left:1.5px solid currentColor; transform:rotate(45deg); }
-.ignis-quantity-header[aria-expanded="false"] .ignis-quantity-chevron { margin-top:-3px; transform:rotate(225deg); }
+.ignis-quantity-header[data-expanded="true"] .ignis-quantity-chevron { margin-top:-3px; transform:rotate(225deg); }
 .ignis-quantity-panel { width:100%; }
-.ignis-quantity-panel[hidden] { display:none !important; }
+.ignis-quantity-panel[data-hidden="true"] { display:none !important; }
 .ignis-quantity-option { display:grid; grid-template-columns:20px 52px max-content minmax(0, 1fr); align-items:center; column-gap:8px; width:100%; min-height:51px; padding:7px 10px; border:0; border-radius:0; color:#1f1f1f; background:#fff; font:inherit; text-align:left; cursor:pointer; }
 .ignis-quantity-option + .ignis-quantity-option { border-top: 1px solid #e7e7e7; }
 .ignis-quantity-option:hover:not(:disabled) { background:#fafafa; }

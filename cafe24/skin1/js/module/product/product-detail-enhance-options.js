@@ -254,13 +254,20 @@
 
     title.textContent = title.textContent.trim() || '옵션 선택 (필수)';
     header.type = 'button';
-    header.setAttribute('aria-expanded', 'true');
+    header.dataset.expanded = 'true'
     chevron.setAttribute('aria-hidden', 'true');
     header.append(title, chevron);
 
+    header.addEventListener('click', function () {
+      var expanded = header.dataset.expanded === 'true';
+
+      header.dataset.expanded = String(!expanded);
+      panel.dataset.hidden = expanded;
+    });
+
+    picker.append(header);
     panel.append(fragment);
     picker.append(panel);
-    picker.append(header);
 
     row.classList.add('ignis-quantity-option-row');
     row.classList.remove('displaynone')
