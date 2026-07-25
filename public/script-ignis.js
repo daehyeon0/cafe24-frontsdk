@@ -9,9 +9,9 @@
     30: Object.freeze({
       price: 70500,
       badge: Object.freeze({
-        bgColor: '#fff0ee',
-        textColor: '#b72b25',
-        text: '가장 많이 사용',
+        bgColor: '#FFF1EB',
+        textColor: '#FF692E',
+        text: '가장 많이 사요',
       }),
     }),
     50: Object.freeze({
@@ -21,8 +21,8 @@
     100: Object.freeze({
       price: 196000,
       badge: Object.freeze({
-        bgColor: '#fff0ee',
-        textColor: '#b72b25',
+        bgColor: '#FFEBEB',
+        textColor: '#EB0004',
         text: '최대할인',
       }),
     }),
