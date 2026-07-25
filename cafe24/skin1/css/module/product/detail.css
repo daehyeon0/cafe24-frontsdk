@@ -43,7 +43,7 @@
 
 /* infoArea */
 .xans-product-detail .infoArea p.delivery { padding:10px 0 20px; }
-.xans-product-detail .infoArea .guideArea { overflow:hidden; margin:5px 0 0; padding:8px 11px 0; border-top:1px solid #e8e8e8; }
+.xans-product-detail .infoArea .guideArea { overflow:hidden; margin: 0; padding:8px 11px 0; border-top:1px solid #e8e8e8; }
 .xans-product-detail .infoArea .guideArea .info { float:left; color:#757575; }
 .xans-product-detail .infoArea .guideArea .sizeGuide { float:right; background:url("//img.echosting.cafe24.com/skin/base_ko_KR/product/ico_sizeGuide.gif") no-repeat 0 3px; }
 .xans-product-detail .infoArea .sizeGuide a { display:inline-block; padding:2px 15px 2px 24px; color:#353535; vertical-align:top; background:url("//img.echosting.cafe24.com/skin/base_ko_KR/product/ico_sizeGuide_go.gif") no-repeat 100% 6px; }
@@ -325,7 +325,8 @@
 .ignis-quantity-header[aria-expanded="false"] .ignis-quantity-chevron { margin-top:-3px; transform:rotate(225deg); }
 .ignis-quantity-panel { width:100%; }
 .ignis-quantity-panel[hidden] { display:none !important; }
-.ignis-quantity-option { display:grid; grid-template-columns:20px 52px max-content minmax(0, 1fr); align-items:center; column-gap:8px; width:100%; min-height:51px; padding:7px 10px; border:0; border-bottom:1px solid #e7e7e7; border-radius:0; color:#1f1f1f; background:#fff; font:inherit; text-align:left; cursor:pointer; }
+.ignis-quantity-option { display:grid; grid-template-columns:20px 52px max-content minmax(0, 1fr); align-items:center; column-gap:8px; width:100%; min-height:51px; padding:7px 10px; border:0; border-radius:0; color:#1f1f1f; background:#fff; font:inherit; text-align:left; cursor:pointer; }
+.ignis-quantity-option + .ignis-quantity-option { border-top: 1px solid #e7e7e7; }
 .ignis-quantity-option:hover:not(:disabled) { background:#fafafa; }
 .ignis-quantity-option.is-selected { background:#fff7f6; }
 .ignis-quantity-radio { display:block; width:16px; height:16px; border:1px solid #cfcfcf; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 4px #fff; }
