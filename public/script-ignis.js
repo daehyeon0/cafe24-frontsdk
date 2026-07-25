@@ -39,7 +39,7 @@
   var DEFAULT_CLIENT_ID = 'F79PeGqf20Le8Hvh63GfCA';
   var OPTION_LABEL_PATTERN = /^(\d+)개입_([12])$/;
   var PICKER_SELECTOR = '.ignis-quantity-picker';
-  var SOURCE_SELECTOR =
+  var OPTION_SOURCE_SELECTOR =
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
   var pickerSequence = 0;
   var cafe24Api = null;
@@ -624,13 +624,17 @@
   }
 
   function enhanceQuantityOptions() {
-    document.querySelectorAll(SOURCE_SELECTOR).forEach(function (sourceList) {
-      var groups = getQuantityGroups(sourceList);
+    var optionSource = document.querySelector(OPTION_SOURCE_SELECTOR);
 
-      if (groups) {
-        createPicker(sourceList, groups);
-      }
-    });
+    if (!optionSource) {
+      return;
+    }
+
+    var groups = getQuantityGroups(optionSource);
+
+    if (groups) {
+      createPicker(optionSource, groups);
+    }
   }
 
   function boot() {
