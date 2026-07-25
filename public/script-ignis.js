@@ -30,6 +30,7 @@
 
   var DEFAULT_CLIENT_ID = 'F79PeGqf20Le8Hvh63GfCA';
   var OPTION_LABEL_PATTERN = /^(\d+)개입_([12])$/;
+  var PICKER_SELECTOR = '.ignis-quantity-picker';
   var OPTION_SOURCE_SELECTOR =
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
   var cafe24Api = null;
@@ -183,13 +184,7 @@
       '1개 : ' + formatWon(config.unitPrice),
     );
     var meta = createElement('span', 'ignis-quantity-meta');
-    var status = createElement(
-      'span',
-      'ignis-quantity-status',
-      '담기 완료',
-    );
 
-    button.type = 'button';
     button.dataset.quantity = String(quantity);
 
     priceLine.append(total, discount);
@@ -207,8 +202,6 @@
       meta.append(badge);
     }
 
-    status.hidden = true;
-    meta.append(status);
     button.append(radio, name, price, meta);
 
     return button;
@@ -372,10 +365,10 @@
         return;
       }
 
-      selectQuantity(picker, groups, button.dataset.quantity);
+      // selectQuantity(picker, groups, button.dataset.quantity);
     });
 
-    refreshPickerState(picker, groups);
+    // refreshPickerState(picker, groups);
   }
 
   function enhanceQuantityOptions() {
@@ -395,6 +388,19 @@
 
   function boot() {
     enhanceQuantityOptions();
+
+    window.addEventListener('pageshow', function () {
+      document.querySelectorAll(PICKER_SELECTOR).forEach(function (picker) {
+        var sourceList = picker.parentElement.querySelector(
+          '.ec-product-button[data-ignis-quantity-enhanced]',
+        );
+        var groups = sourceList ? getQuantityGroups(sourceList) : null;
+
+        if (groups) {
+          refreshPickerState(picker, groups);
+        }
+      });
+    });
   }
 
   if (document.readyState === 'loading') {
