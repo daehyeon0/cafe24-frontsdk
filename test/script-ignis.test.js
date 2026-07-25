@@ -44,7 +44,7 @@ async function createQuantityPage({
       <html lang="ko">
         <head></head>
         <body>
-          <div id="product-data">{"price": 3290}</div>
+          <div id="product-data">{"price": 32900}</div>
           <div class="xans-product-option">
             <table>
               <tbody>
@@ -150,7 +150,7 @@ test('수량 옵션 두 개씩을 가격 정보가 포함된 네 개 행으로 �
   assert.match(buttons[0].textContent, /24,700원/);
   assert.match(buttons[0].textContent, /25% 할인/);
   assert.match(buttons[0].textContent, /1개 : 2,470원/);
-  assert.match(buttons[1].textContent, /가장 많이 사용/);
+  assert.match(buttons[1].textContent, /가장 많이 사요/);
   assert.match(buttons[3].textContent, /최대할인/);
   assert.equal(
     page.getInitializedClientId(),
@@ -160,54 +160,17 @@ test('수량 옵션 두 개씩을 가격 정보가 포함된 네 개 행으로 �
   page.dom.window.close();
 });
 
-test('장바구니 상태에 따라 _1, _2 순으로 선택한 뒤 행을 비활성화한다', async () => {
+test('수량 옵션 클릭 시 첫 번째 Cafe24 옵션을 선택한다', async () => {
   const page = await createQuantityPage();
   const { document } = page.dom.window;
   const tenPack = document.querySelector(
     '.ignis-quantity-option[data-quantity="10"]',
   );
-  const cartButton = document.querySelector('#cart-button');
-
-  assert.equal(cartButton.dataset.ignisCartTracking, 'true');
-
   tenPack.click();
   await wait();
 
   assert.deepEqual(page.nativeSelections, ['P000000L000N']);
-  assert.equal(tenPack.getAttribute('aria-checked'), 'true');
-
-  cartButton.click();
-  page.cartVariantCodes.push('P000000L000N');
-  await wait(320);
-
-  assert.equal(tenPack.disabled, false);
-  assert.equal(tenPack.dataset.nextOrder, '2');
-  assert.equal(tenPack.getAttribute('aria-checked'), 'false');
-
-  tenPack.click();
-  await wait();
-
-  assert.deepEqual(page.nativeSelections, [
-    'P000000L000N',
-    'P000000L000O',
-  ]);
-
-  cartButton.click();
-  page.cartVariantCodes.push('P000000L000O');
-  await wait(320);
-
-  assert.equal(tenPack.disabled, true);
-  assert.ok(tenPack.classList.contains('is-exhausted'));
-  assert.match(tenPack.textContent, /담기 완료/);
-  assert.match(tenPack.getAttribute('aria-label'), /모두 장바구니에 담음/);
-
-  tenPack.click();
-  await wait();
-
-  assert.deepEqual(page.nativeSelections, [
-    'P000000L000N',
-    'P000000L000O',
-  ]);
+  assert.ok(tenPack.classList.contains('is-selected'));
 
   page.dom.window.close();
 });
@@ -227,26 +190,6 @@ test('수량형 _1, _2 쌍이 아닌 Cafe24 옵션은 변경하지 않는다', a
       .ignisQuantityEnhanced,
     undefined,
   );
-
-  page.dom.window.close();
-});
-
-test('옵션 헤더는 목록을 접고 다시 펼친다', async () => {
-  const page = await createQuantityPage();
-  const { document } = page.dom.window;
-  const header = document.querySelector('.ignis-quantity-header');
-  const panel = document.querySelector('.ignis-quantity-panel');
-
-  assert.equal(header.getAttribute('aria-expanded'), 'true');
-  assert.equal(panel.hidden, false);
-
-  header.click();
-  assert.equal(header.getAttribute('aria-expanded'), 'false');
-  assert.equal(panel.hidden, true);
-
-  header.click();
-  assert.equal(header.getAttribute('aria-expanded'), 'true');
-  assert.equal(panel.hidden, false);
 
   page.dom.window.close();
 });

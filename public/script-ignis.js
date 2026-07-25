@@ -30,10 +30,8 @@
 
   var DEFAULT_CLIENT_ID = 'F79PeGqf20Le8Hvh63GfCA';
   var OPTION_LABEL_PATTERN = /^(\d+)개입_([12])$/;
-  var PICKER_SELECTOR = '.ignis-quantity-picker';
   var OPTION_SOURCE_SELECTOR =
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
-  var pickerSequence = 0;
   var cafe24Api = null;
 
   function formatWon(value) {
@@ -193,10 +191,7 @@
 
     button.type = 'button';
     button.dataset.quantity = String(quantity);
-    button.setAttribute('role', 'radio');
-    button.setAttribute('aria-checked', 'false');
 
-    radio.setAttribute('aria-hidden', 'true');
     priceLine.append(total, discount);
     price.append(priceLine, unit);
 
@@ -228,7 +223,6 @@
         Number(button.dataset.quantity) === Number(quantity);
 
       button.classList.toggle('is-selected', selected);
-      button.setAttribute('aria-checked', selected ? 'true' : 'false');
     });
   }
 
@@ -254,20 +248,6 @@
     );
   }
 
-  function getGroupSignature(groups, variantCodes) {
-    var activeCodes = [];
-
-    groups.forEach(function (options) {
-      options.forEach(function (option) {
-        if (variantCodes.has(option.variantCode)) {
-          activeCodes.push(option.variantCode);
-        }
-      });
-    });
-
-    return activeCodes.sort().join('|');
-  }
-
   function updatePickerState(picker, groups, variantCodes) {
     picker.querySelectorAll('.ignis-quantity-option').forEach(function (
       button,
@@ -291,22 +271,8 @@
         status.hidden = !button.disabled;
       }
 
-      if (exhausted) {
-        button.setAttribute(
-          'aria-label',
-          quantity + '개입, 두 구성을 모두 장바구니에 담음',
-        );
-      } else if (unavailable) {
-        button.setAttribute(
-          'aria-label',
-          quantity + '개입, 다음 구성을 현재 선택할 수 없음',
-        );
-      } else {
-        button.removeAttribute('aria-label');
-      }
     });
 
-    picker.dataset.cartSignature = getGroupSignature(groups, variantCodes);
   }
 
   function refreshPickerState(picker, groups, callback) {
@@ -317,19 +283,6 @@
         callback(variantCodes);
       }
     });
-  }
-
-  function announce(picker, message) {
-    var liveRegion = picker.querySelector('.ignis-quantity-live');
-
-    if (!liveRegion) {
-      return;
-    }
-
-    liveRegion.textContent = '';
-    window.setTimeout(function () {
-      liveRegion.textContent = message;
-    }, 20);
   }
 
   function selectQuantity(picker, groups, quantity) {
@@ -359,145 +312,7 @@
 
       nativeLink.click();
       setSelectedQuantity(picker, Number(quantity));
-      announce(
-        picker,
-        quantity +
-          '개입 ' +
-          nextOption.order +
-          '번째 구성을 선택했습니다.',
-      );
     });
-  }
-
-  function bindRadioKeyboard(picker, groups) {
-    picker.addEventListener('keydown', function (event) {
-      if (
-        !event.target.classList.contains('ignis-quantity-option') ||
-        !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
-          event.key,
-        )
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      var enabledButtons = Array.from(
-        picker.querySelectorAll('.ignis-quantity-option:not(:disabled)'),
-      );
-      var currentIndex = enabledButtons.indexOf(event.target);
-      var direction =
-        event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -1 : 1;
-      var nextIndex =
-        (currentIndex + direction + enabledButtons.length) %
-        enabledButtons.length;
-      var nextButton = enabledButtons[nextIndex];
-
-      if (nextButton) {
-        nextButton.focus();
-        selectQuantity(picker, groups, nextButton.dataset.quantity);
-      }
-    });
-  }
-
-  function watchForCartChange(picker, groups, selectedQuantity, attempt) {
-    if (!document.documentElement.contains(picker)) {
-      return;
-    }
-
-    refreshPickerState(picker, groups, function () {
-      var previousSignature = picker.dataset.cartSignatureBeforeSubmit || '';
-      var currentSignature = picker.dataset.cartSignature || '';
-
-      if (currentSignature !== previousSignature) {
-        setSelectedQuantity(picker, null);
-
-        var selectedButton = picker.querySelector(
-          '.ignis-quantity-option[data-quantity="' +
-            selectedQuantity +
-            '"]',
-        );
-        var completed =
-          selectedButton &&
-          selectedButton.classList.contains('is-exhausted');
-
-        announce(
-          picker,
-          completed
-            ? selectedQuantity +
-                '개입 두 구성을 모두 장바구니에 담았습니다.'
-            : selectedQuantity +
-                '개입을 장바구니에 담았습니다. 다음 선택은 두 번째 구성입니다.',
-        );
-        return;
-      }
-
-      if (attempt < 19) {
-        window.setTimeout(function () {
-          watchForCartChange(
-            picker,
-            groups,
-            selectedQuantity,
-            attempt + 1,
-          );
-        }, 250);
-      }
-    });
-  }
-
-  function bindCartTracking(picker, groups) {
-    document
-      .querySelectorAll('[onclick*="product_submit"]')
-      .forEach(function (cartButton) {
-        var inlineAction = cartButton.getAttribute('onclick') || '';
-
-        if (!/product_submit\s*\(\s*2\s*,/.test(inlineAction)) {
-          return;
-        }
-
-        if (cartButton.dataset.ignisCartTracking) {
-          return;
-        }
-
-        cartButton.dataset.ignisCartTracking = 'true';
-        cartButton.addEventListener('click', function () {
-          var selectedButton = picker.querySelector(
-            '.ignis-quantity-option[aria-checked="true"]',
-          );
-
-          if (!selectedButton) {
-            return;
-          }
-
-          picker.dataset.cartSignatureBeforeSubmit =
-            picker.dataset.cartSignature || '';
-
-          window.setTimeout(function () {
-            watchForCartChange(
-              picker,
-              groups,
-              selectedButton.dataset.quantity,
-              0,
-            );
-          }, 250);
-        });
-      });
-  }
-
-  function syncNativeSelection(picker, groups) {
-    var selectedQuantity = null;
-
-    groups.forEach(function (options, quantity) {
-      if (
-        options.some(function (option) {
-          return option.element.classList.contains('ec-product-selected');
-        })
-      ) {
-        selectedQuantity = quantity;
-      }
-    });
-
-    setSelectedQuantity(picker, selectedQuantity);
   }
 
   function createPicker(sourceList, groups, originalPrice) {
@@ -508,30 +323,8 @@
       return;
     }
 
-    pickerSequence += 1;
-
     var picker = createElement('section', 'ignis-quantity-picker');
-    var header = createElement('button', 'ignis-quantity-header');
-    var title = createElement(
-      'span',
-      'ignis-quantity-header-title',
-      (row.querySelector('th') || {}).textContent || '옵션 선택 (필수)',
-    );
-    var chevron = createElement('span', 'ignis-quantity-chevron');
     var panel = createElement('ul', 'ignis-quantity-panel');
-    var liveRegion = createElement('span', 'ignis-quantity-live');
-    var panelId = 'ignis-quantity-panel-' + pickerSequence;
-
-    title.textContent = title.textContent.trim() || '옵션 선택 (필수)';
-    header.type = 'button';
-    header.setAttribute('aria-expanded', 'true');
-    header.setAttribute('aria-controls', panelId);
-    chevron.setAttribute('aria-hidden', 'true');
-    header.append(title, chevron);
-
-    panel.id = panelId;
-    panel.setAttribute('role', 'radiogroup');
-    panel.setAttribute('aria-label', title.textContent);
 
     Array.from(groups.keys())
       .sort(function (left, right) {
@@ -542,8 +335,7 @@
 
         var unitPrice = option.price / quantity;
         var totalPriceBeforeSale = (originalPrice / 10) * quantity;
-
-        var discountRate = (1 - option.price / totalPriceBeforeSale)
+        var discountRate = 1 - option.price / totalPriceBeforeSale;
         var discountPercentage = Math.round(
            discountRate * 100,
         );
@@ -559,10 +351,7 @@
         );
       });
 
-    liveRegion.className = 'ignis-quantity-live ignis-visually-hidden';
-    liveRegion.setAttribute('aria-live', 'polite');
-    liveRegion.setAttribute('aria-atomic', 'true');
-    picker.append(header, panel, liveRegion);
+    picker.append(panel);
 
     row.classList.add('ignis-quantity-option-row');
     sourceList.dataset.ignisQuantityEnhanced = 'true';
@@ -576,13 +365,6 @@
 
     cell.insertBefore(picker, sourceList);
 
-    header.addEventListener('click', function () {
-      var expanded = header.getAttribute('aria-expanded') === 'true';
-
-      header.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-      panel.hidden = expanded;
-    });
-
     panel.addEventListener('click', function (event) {
       var button = event.target.closest('.ignis-quantity-option');
 
@@ -593,31 +375,7 @@
       selectQuantity(picker, groups, button.dataset.quantity);
     });
 
-    bindRadioKeyboard(picker, groups);
-    bindCartTracking(picker, groups);
     refreshPickerState(picker, groups);
-
-    var selectionObserver = new MutationObserver(function (mutations) {
-      if (
-        mutations.some(function (mutation) {
-          return mutation.type === 'attributes';
-        })
-      ) {
-        syncNativeSelection(picker, groups);
-        refreshPickerState(picker, groups);
-      }
-    });
-
-    groups.forEach(function (options) {
-      options.forEach(function (option) {
-        selectionObserver.observe(option.element, {
-          attributes: true,
-          attributeFilter: ['class'],
-        });
-      });
-    });
-
-    syncNativeSelection(picker, groups);
   }
 
   function enhanceQuantityOptions() {
@@ -637,19 +395,6 @@
 
   function boot() {
     enhanceQuantityOptions();
-
-    window.addEventListener('pageshow', function () {
-      document.querySelectorAll(PICKER_SELECTOR).forEach(function (picker) {
-        var sourceList = picker.parentElement.querySelector(
-          '.ec-product-button[data-ignis-quantity-enhanced]',
-        );
-        var groups = sourceList ? getQuantityGroups(sourceList) : null;
-
-        if (groups) {
-          refreshPickerState(picker, groups);
-        }
-      });
-    });
   }
 
   if (document.readyState === 'loading') {
