@@ -636,24 +636,6 @@
   function boot() {
     enhanceQuantityOptions();
 
-    var scheduled = false;
-    var pageObserver = new MutationObserver(function () {
-      if (scheduled) {
-        return;
-      }
-
-      scheduled = true;
-      window.requestAnimationFrame(function () {
-        scheduled = false;
-        enhanceQuantityOptions();
-      });
-    });
-
-    pageObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
     window.addEventListener('pageshow', function () {
       document.querySelectorAll(PICKER_SELECTOR).forEach(function (picker) {
         var sourceList = picker.parentElement.querySelector(
