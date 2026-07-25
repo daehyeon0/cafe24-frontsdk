@@ -2,25 +2,35 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 
 const publicPath = fileURLToPath(new URL('../public', import.meta.url));
-const cafe24MallId = 'df6d';
-const cafe24ClientId = 'F79PeGqf20Le8Hvh63GfCA';
-const cafe24OAuthState = '886321e3baf3';
-const cafe24RedirectUri =
-  'https://cafe24-frontsdk.vercel.app/oauth/authorize';
-const cafe24ScriptUrl =
-  'https://cafe24-frontsdk.vercel.app/script-ignis.js';
-const cafe24AuthorizationEndpoint =
-  `https://${cafe24MallId}.cafe24api.com/api/v2/oauth/authorize`;
-const cafe24TokenEndpoint =
-  `https://${cafe24MallId}.cafe24api.com/api/v2/oauth/token`;
+const CAFE24_MALL_ID = 'df6d';
+const CAFE24_CLIENT_ID = 'F79PeGqf20Le8Hvh63GfCA';
+const CAFE24_AUTH_STATE = '886321e3baf3';
+
+const OAUTH_CLIENT_ORIGIN_PROD = 'https://cafe24-frontsdk.vercel.app';
+const OAUTH_CLIENT_ORIGIN_PREVIEW =
+  'https://cafe24-frontsdk-6lci2feqg-dd70296-1022s-projects.vercel.app';
+
+const CAFE24_AUTHORIZATION_ENDPOINT =
+  `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/authorize`;
+const CAFE24_TOKEN_ENDPOINT =
+  `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token`;
 const cafe24AuthorizationParams = {
   response_type: 'code',
-  client_id: cafe24ClientId,
-  state: cafe24OAuthState,
-  redirect_uri: cafe24RedirectUri,
+  client_id: CAFE24_CLIENT_ID,
+  state: CAFE24_AUTH_STATE,
   scope:
     'mall.write_order mall.read_application mall.write_application',
 };
+const cafe24AuthorizationTargets = [
+  {
+    buttonTitle: '운영 배포 script 설정',
+    redirectUri: `${OAUTH_CLIENT_ORIGIN_PROD}/oauth/authorize`,
+  },
+  {
+    buttonTitle: '프리뷰 배포 script 설정',
+    redirectUri: `${OAUTH_CLIENT_ORIGIN_PREVIEW}/oauth/authorize`,
+  },
+];
 
 function escapeHtml(value) {
   return value.replace(
@@ -37,12 +47,24 @@ function escapeHtml(value) {
 }
 
 function renderAuthorizationPage() {
-  const hiddenInputs = Object.entries(cafe24AuthorizationParams)
-    .map(
-      ([name, value]) =>
-        `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`,
-    )
-    .join('\n        ');
+  const forms = cafe24AuthorizationTargets
+    .map((target) => {
+      const hiddenInputs = Object.entries({
+        ...cafe24AuthorizationParams,
+        redirect_uri: target.redirectUri,
+      })
+        .map(
+          ([name, value]) =>
+            `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`,
+        )
+        .join('\n        ');
+
+      return `    <form method="get" action="${CAFE24_AUTHORIZATION_ENDPOINT}">
+      ${hiddenInputs}
+      <button type="submit" title="${escapeHtml(target.buttonTitle)}">${escapeHtml(target.buttonTitle)}</button>
+    </form>`;
+    })
+    .join('\n');
 
   return `<!doctype html>
 <html lang="ko">
@@ -52,12 +74,15 @@ function renderAuthorizationPage() {
     <title>Cafe24 OAuth</title>
   </head>
   <body>
-    <form method="get" action="${cafe24AuthorizationEndpoint}">
-      ${hiddenInputs}
-      <button type="submit">Cafe24 OAuth 인증</button>
-    </form>
+${forms}
   </body>
 </html>`;
+}
+
+function getCafe24RedirectUri(hostname) {
+  return hostname === new URL(cafe24RedirectUriPreview).hostname
+    ? cafe24RedirectUriPreview
+    : cafe24RedirectUriProd;
 }
 
 async function parseCafe24Response(response, operation) {
@@ -94,6 +119,7 @@ export function createApp({
   logger = console,
   fetchImpl = fetch,
   cafe24ClientSecret = process.env.CAFE24_CLIENT_SECRET,
+  vercelEnv = process.env.VERCEL_ENV,
 } = {}) {
   const app = express();
 
@@ -120,7 +146,7 @@ export function createApp({
       });
     }
 
-    if (state !== cafe24OAuthState) {
+    if (state !== CAFE24_AUTH_STATE) {
       return res.status(401).json({
         error: 'Invalid OAuth state',
       });
@@ -137,10 +163,13 @@ export function createApp({
     }
 
     try {
+      const redirectUri = getCafe24RedirectUri(req.hostname);
+      const SCRIPT_FILENAME = 'script-ignis.js'
+      const cafe24ScriptUrl = process.env.VERCEL_ENV === 'production' ? `${OAUTH_CLIENT_ORIGIN_PROD}/${SCRIPT_FILENAME}` : `${OAUTH_CLIENT_ORIGIN_PREVIEW}/${SCRIPT_FILENAME}`;
       const basicAuthorization = Buffer.from(
-        `${cafe24ClientId}:${cafe24ClientSecret}`,
+        `${CAFE24_CLIENT_ID}:${cafe24ClientSecret}`,
       ).toString('base64');
-      const tokenResponse = await fetchImpl(cafe24TokenEndpoint, {
+      const tokenResponse = await fetchImpl(CAFE24_TOKEN_ENDPOINT, {
         method: 'POST',
         headers: {
           Authorization: `Basic ${basicAuthorization}`,
@@ -149,7 +178,7 @@ export function createApp({
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: cafe24RedirectUri,
+          redirect_uri: redirectUri,
         }),
         signal: AbortSignal.timeout(10_000),
       });
@@ -163,16 +192,53 @@ export function createApp({
       }
 
       const mallId = token.mall_id || cafe24MallId;
+      const shopNo = Number(token.shop_no || 1);
+      const scriptTagsEndpoint =
+        `https://${mallId}.cafe24api.com/api/v2/admin/scripttags`;
+      const scriptTagHeaders = {
+        Authorization: `Bearer ${token.access_token}`,
+      };
+      const existingScriptTagsResponse = await fetchImpl(
+        `${scriptTagsEndpoint}?shop_no=${shopNo}`,
+        {
+          headers: scriptTagHeaders,
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+      const existingScriptTags = await parseCafe24Response(
+        existingScriptTagsResponse,
+        'Cafe24 script tag lookup',
+      );
+
+      for (const scriptTag of existingScriptTags?.scripttags || []) {
+        if (!scriptTag.script_no) {
+          continue;
+        }
+
+        const deletionResponse = await fetchImpl(
+          `${scriptTagsEndpoint}/${scriptTag.script_no}?shop_no=${shopNo}`,
+          {
+            method: 'DELETE',
+            headers: scriptTagHeaders,
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+        await parseCafe24Response(
+          deletionResponse,
+          'Cafe24 script tag deletion',
+        );
+      }
+
       const scriptTagResponse = await fetchImpl(
-        `https://${mallId}.cafe24api.com/api/v2/admin/scripttags`,
+        scriptTagsEndpoint,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token.access_token}`,
+            ...scriptTagHeaders,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            shop_no: Number(token.shop_no || 1),
+            shop_no: shopNo,
             request: {
               src: cafe24ScriptUrl,
               display_location: ['PRODUCT_DETAIL'],
