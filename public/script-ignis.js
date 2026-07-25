@@ -631,6 +631,7 @@
     }
 
     var groups = getQuantityGroups(optionSource);
+    console.log('groups', groups)
 
     if (groups) {
       createPicker(optionSource, groups);
