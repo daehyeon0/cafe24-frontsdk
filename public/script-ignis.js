@@ -50,21 +50,7 @@
   }
 
   function getClientId() {
-    var currentScript = document.currentScript;
-
-    if (!currentScript || !currentScript.src) {
-      return DEFAULT_CLIENT_ID;
-    }
-
-    try {
-      return (
-        new URL(currentScript.src, window.location.href).searchParams.get(
-          'client_id',
-        ) || DEFAULT_CLIENT_ID
-      );
-    } catch (_error) {
-      return DEFAULT_CLIENT_ID;
-    }
+    return DEFAULT_CLIENT_ID;
   }
 
   function getCafe24Api() {
@@ -72,16 +58,7 @@
       return cafe24Api;
     }
 
-    if (!window.CAFE24API) {
-      return null;
-    }
-
-    try {
-      cafe24Api = window.CAFE24API.init(getClientId());
-    } catch (_error) {
-      cafe24Api = window.CAFE24API;
-    }
-
+    cafe24Api = window.CAFE24API.init(getClientId());
     return cafe24Api;
   }
 
