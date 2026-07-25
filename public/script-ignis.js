@@ -87,14 +87,11 @@
     ) {
       return element.tagName === 'LI';
     });
-    var sourceOptions = sourceElements.map(getSourceOption);
+    var sourceOptions = sourceElements.map(getSourceOption).filter(function (option) {
+      return !!option
+    });
 
-    if (
-      sourceOptions.length === 0 ||
-      sourceOptions.some(function (option) {
-        return option === null;
-      })
-    ) {
+    if (sourceOptions.length === 0) {
       return null;
     }
 
@@ -106,33 +103,6 @@
       }
 
       groups.get(option.quantity).push(option);
-    });
-
-    var valid = Array.from(groups.values()).every(function (options) {
-      var orders = options
-        .map(function (option) {
-          return option.order;
-        })
-        .sort();
-
-      return (
-        options.length === 2 &&
-        orders[0] === 1 &&
-        orders[1] === 2 &&
-        options.every(function (option) {
-          return Boolean(option.variantCode);
-        })
-      );
-    });
-
-    if (!valid) {
-      return null;
-    }
-
-    groups.forEach(function (options) {
-      options.sort(function (left, right) {
-        return left.order - right.order;
-      });
     });
 
     return groups;
@@ -631,7 +601,6 @@
     }
 
     var groups = getQuantityGroups(optionSource);
-    console.log('groups', groups)
 
     if (groups) {
       createPicker(optionSource, groups);
