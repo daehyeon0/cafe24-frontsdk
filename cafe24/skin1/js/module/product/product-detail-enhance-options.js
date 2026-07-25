@@ -122,7 +122,6 @@
 
   function updateQuantityOptionPicker(picker) {
     picker.querySelectorAll('.ignis-quantity-option').forEach(function (button) {
-      console.log(Number(button.dataset.quantity), selectedQuantity)
       button.classList.toggle(
         'is-selected',
         Number(button.dataset.quantity) === selectedQuantity,
@@ -143,34 +142,30 @@
     var picker = document.querySelector('.ignis-quantity-picker');
     var nextQuantity = Number(quantity);
 
-    if (nextQuantity === UNSELECTED_QUANTITY_VALUE) {
-      selectedQuantity = nextQuantity;
-      updateQuantityOptionPicker(picker);
-      updateFlavorOptionPicker();
-      return;
-    }
+    if (nextQuantity !== UNSELECTED_QUANTITY_VALUE) {
+      var sourceList = document.querySelector(
+        '.ec-product-button[data-ignis-quantity-enhanced]',
+      );
+      var groups = sourceList && getQuantityGroups(sourceList);
+      var options = groups && groups.get(nextQuantity);
 
-    var sourceList = document.querySelector(
-      '.ec-product-button[data-ignis-quantity-enhanced]',
-    );
-    var groups = sourceList && getQuantityGroups(sourceList);
-    var options = groups && groups.get(nextQuantity);
+      if (!options) {
+        console.error('[handleClickQuantity]: not expected quantity');
+        return;
+      }
 
-    if (!options) {
-      console.error('[handleClickQuantity]: not expected quantity');
-      return;
-    }
+      var selectableOption = options.find(function (option) {
+        return !option.element.classList.contains('ec-product-selected');
+      });
 
-    var selectableOption = options.find(function (option) {
-      return !option.element.classList.contains('ec-product-selected');
-    });
-
-    if (isUnavailable(options) || !selectableOption) {
-      window.alert('선택할 수 없는 수량입니다.');
-      return;
+      if (isUnavailable(options) || !selectableOption) {
+        window.alert('선택할 수 없는 수량입니다.');
+        return;
+      }
     }
 
     selectedQuantity = nextQuantity;
+    selectedFlavor = {};
     updateQuantityOptionPicker(picker);
     updateFlavorOptionPicker();
   }
@@ -326,6 +321,7 @@
   }
 
   function getSelectedFlavorTotal() {
+
     return Object.keys(selectedFlavor).reduce(function (sum, index) {
       return sum + selectedFlavor[index];
     }, 0);
@@ -448,30 +444,22 @@
 
     sheet.addEventListener('click', function (event) {
       var closeButton = event.target.closest('[data-close]');
-      var changeButton = event.target.closest('[data-change]');
-
-      if (closeButton || event.target === sheet) {
+      if (event.target === closeButton) {
         handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
         return;
       }
 
-      if (!changeButton) {
-        return;
-      }
+      var changeButton = event.target.closest('[data-change]');
 
       var option = changeButton.closest('.ignis-flavor-option');
       var index = option.dataset.index;
       var currentCount = selectedFlavor[index] || 0;
       var otherCount = getSelectedFlavorTotal() - currentCount;
       var maxCount = selectedQuantity / 10 - otherCount;
-      var count = Math.max(
-        0,
-        currentCount + Number(changeButton.dataset.change),
-      );
+      var count = currentCount + Number(changeButton.dataset.change);
 
-      selectedFlavor[index] = Math.min(count, Math.max(0, maxCount));
+      selectedFlavor[index] = Math.max(0, Math.min(count, maxCount));
       updateFlavorOptionPicker();
-
     });
 
     picker.insertAdjacentElement('afterend', sheet);
