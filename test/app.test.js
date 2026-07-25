@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import createApp from '../src/app.js';
+import app, { createApp } from '../src/app.js';
 
 const servers = [];
 
@@ -30,6 +30,17 @@ test('GET / returns 200 OK', async () => {
   const baseUrl = await startServer(app);
 
   const response = await fetch(baseUrl);
+
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'OK');
+});
+
+test('the default export handles requests as an Express application', async () => {
+  const baseUrl = await startServer(app);
+
+  const response = await fetch(baseUrl, {
+    signal: AbortSignal.timeout(500),
+  });
 
   assert.equal(response.status, 200);
   assert.equal(await response.text(), 'OK');
