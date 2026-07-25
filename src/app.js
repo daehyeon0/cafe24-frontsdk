@@ -6,7 +6,7 @@ export function getRawQueryString(originalUrl) {
   return queryStartIndex === -1 ? '' : originalUrl.slice(queryStartIndex + 1);
 }
 
-export function createApp({ logger = console } = {}) {
+export default function createApp({ logger = console } = {}) {
   const app = express();
 
   app.disable('x-powered-by');
