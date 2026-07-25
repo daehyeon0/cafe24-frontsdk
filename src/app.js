@@ -8,7 +8,7 @@ const CAFE24_AUTH_STATE = '886321e3baf3';
 
 const OAUTH_CLIENT_ORIGIN_PROD = 'https://cafe24-frontsdk.vercel.app';
 const OAUTH_CLIENT_ORIGIN_PREVIEW =
-  'https://cafe24-frontsdk-6lci2feqg-dd70296-1022s-projects.vercel.app';
+  'cafe24-frontsdk-git-enhance-option-dd70296-1022s-projects.vercel.app';
 
 const CAFE24_AUTHORIZATION_ENDPOINT =
   `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/authorize`;
