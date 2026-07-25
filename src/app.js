@@ -171,7 +171,7 @@ export function createApp({
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: cafe24AuthorizationTargets[0].redirectUri,
+          redirect_uri: process.env.VERCEL_ENV === 'production' ? cafe24AuthorizationTargets[0].redirectUri : cafe24AuthorizationTargets[1].redirectUri,
         }),
         signal: AbortSignal.timeout(10_000),
       });
