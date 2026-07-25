@@ -377,6 +377,7 @@
     var originalPrice = getOriginalPrice();
 
     if (!optionSource || originalPrice === null) {
+      console.log('[enhanceQuantityOptions]: optionSorce already enhanced');
       return;
     }
 
