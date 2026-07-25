@@ -79,12 +79,6 @@ ${forms}
 </html>`;
 }
 
-function getCafe24RedirectUri(hostname) {
-  return hostname === new URL(cafe24RedirectUriPreview).hostname
-    ? cafe24RedirectUriPreview
-    : cafe24RedirectUriProd;
-}
-
 async function parseCafe24Response(response, operation) {
   const responseText = await response.text();
   let responseBody = null;
@@ -163,7 +157,6 @@ export function createApp({
     }
 
     try {
-      const redirectUri = getCafe24RedirectUri(req.hostname);
       const SCRIPT_FILENAME = 'script-ignis.js'
       const cafe24ScriptUrl = process.env.VERCEL_ENV === 'production' ? `${OAUTH_CLIENT_ORIGIN_PROD}/${SCRIPT_FILENAME}` : `${OAUTH_CLIENT_ORIGIN_PREVIEW}/${SCRIPT_FILENAME}`;
       const basicAuthorization = Buffer.from(
@@ -178,7 +171,7 @@ export function createApp({
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: redirectUri,
+          redirect_uri: cafe24AuthorizationTargets[0].redirectUri,
         }),
         signal: AbortSignal.timeout(10_000),
       });
