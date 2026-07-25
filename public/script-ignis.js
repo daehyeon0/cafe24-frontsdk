@@ -149,7 +149,7 @@
   }
 
   function createQuantityButton(quantity, config) {
-    var button = createElement('button', 'ignis-quantity-option');
+    var button = createElement('li', 'ignis-quantity-option');
     var radio = createElement('span', 'ignis-quantity-radio');
     var name = createElement(
       'span',
@@ -507,7 +507,7 @@
       (row.querySelector('th') || {}).textContent || '옵션 선택 (필수)',
     );
     var chevron = createElement('span', 'ignis-quantity-chevron');
-    var panel = createElement('div', 'ignis-quantity-panel');
+    var panel = createElement('ul', 'ignis-quantity-panel');
     var liveRegion = createElement('span', 'ignis-quantity-live');
     var panelId = 'ignis-quantity-panel-' + pickerSequence;
 
