@@ -22,8 +22,8 @@ const quantityVariants = [
 function optionListMarkup(options) {
   return options
     .map(
-      ([label, variantCode]) => `
-        <li title="${label}" option_value="${variantCode}">
+      ([label, variantCode, className = '']) => `
+        <li class="${className}" title="${label}" option_value="${variantCode}">
           <a href="#none"><span>${label}</span></a>
         </li>
       `,
@@ -152,6 +152,26 @@ test('수량 옵션 클릭 시 첫 번째 Cafe24 옵션을 선택한다', async 
   assert.deepEqual(page.nativeSelections, ['P000000L000N']);
   assert.ok(tenPack.classList.contains('is-selected'));
 
+  page.dom.window.close();
+});
+
+test('선택할 수 없는 수량 클릭 시 알림을 표시한다', async () => {
+  const page = await createQuantityPage({
+    options: quantityVariants.map((option) =>
+      option[0] === '10개입_1'
+        ? [...option, 'ec-product-soldout']
+        : option,
+    ),
+  });
+  const alerts = [];
+  page.dom.window.alert = (message) => alerts.push(message);
+
+  page.dom.window.document
+    .querySelector('.ignis-quantity-option[data-quantity="10"]')
+    .click();
+
+  assert.deepEqual(alerts, ['선택할 수 없는 수량입니다.']);
+  assert.deepEqual(page.nativeSelections, []);
   page.dom.window.close();
 });
 

@@ -28,17 +28,17 @@
     }),
   });
 
-  var DEFAULT_CLIENT_ID = 'F79PeGqf20Le8Hvh63GfCA';
   var OPTION_LABEL_PATTERN = /^(\d+)개입_([12])$/;
   var PICKER_SELECTOR = '.ignis-quantity-picker';
   var OPTION_SOURCE_SELECTOR =
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
-  var cafe24Api = null;
+  var selectedQuantity = -1; // -1: 미선택, 10, 30, 50, 100: 각 수량
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
   }
 
+  // 최초 판매가 가져오기
   function getOriginalPrice() {
     var productDataElement = document.querySelector('#product-data');
 
@@ -58,19 +58,7 @@
     }
   }
 
-  function getClientId() {
-    return DEFAULT_CLIENT_ID;
-  }
-
-  function getCafe24Api() {
-    if (cafe24Api) {
-      return cafe24Api;
-    }
-
-    cafe24Api = window.CAFE24API.init(getClientId());
-    return cafe24Api;
-  }
-
+  // 기존 option picker로 부터 값 가져오기
   function getSourceOption(element) {
     var label = (
       element.getAttribute('title') ||
@@ -86,7 +74,6 @@
     return {
       quantity: Number(match[1]),
       order: Number(match[2]),
-      variantCode: element.getAttribute('option_value') || '',
       element: element,
     };
   }
@@ -118,32 +105,6 @@
     return groups;
   }
 
-  function getCartVariantCodes(callback) {
-    var api = getCafe24Api();
-
-    if (!api || typeof api.getCartItemList !== 'function') {
-      callback(new Set());
-      return;
-    }
-
-    api.getCartItemList(function (error, response) {
-      if (error || !response || !Array.isArray(response.items)) {
-        callback(new Set());
-        return;
-      }
-
-      var variantCodes = new Set();
-
-      response.items.forEach(function (item) {
-        if (item && item.variant_code) {
-          variantCodes.add(String(item.variant_code));
-        }
-      });
-
-      callback(variantCodes);
-    });
-  }
-
   function createElement(tagName, className, text) {
     var element = document.createElement(tagName);
 
@@ -156,6 +117,41 @@
     }
 
     return element;
+  }
+
+  function updateOptionPicker(picker) {
+    picker.querySelectorAll('.ignis-quantity-option').forEach(function (button) {
+      button.classList.toggle(
+        'is-selected',
+        Number(button.dataset.quantity) === selectedQuantity,
+      );
+    });
+  }
+  function isUnavailable(option) {
+    return (
+      option.element.classList.contains('ec-product-disabled') ||
+      option.element.classList.contains('ec-product-soldout')
+    );
+  }
+
+  function handleClickQuantity(picker, groups, quantity) {
+    var option = groups.get(Number(quantity));
+
+    if (!option) {
+      console.error('[handleClickQuantity]: not expected quantity')
+      return;
+    }
+
+    var nativeLink = option && option.element.querySelector('a');
+
+    if (!option || isUnavailable(option) || !nativeLink) {
+      window.alert('선택할 수 없는 수량입니다.');
+      return;
+    }
+
+    selectedQuantity = Number(quantity);
+    updateOptionPicker(picker);
+    nativeLink.click();
   }
 
   function createQuantityButton(quantity, config) {
@@ -205,107 +201,6 @@
     button.append(radio, name, price, meta);
 
     return button;
-  }
-
-  function setSelectedQuantity(picker, quantity) {
-    picker.querySelectorAll('.ignis-quantity-option').forEach(function (
-      button,
-    ) {
-      var selected =
-        quantity !== null &&
-        Number(button.dataset.quantity) === Number(quantity);
-
-      button.classList.toggle('is-selected', selected);
-    });
-  }
-
-  function getNextSourceOption(options, variantCodes) {
-    var first = options[0];
-    var second = options[1];
-
-    if (!variantCodes.has(first.variantCode)) {
-      return first;
-    }
-
-    if (!variantCodes.has(second.variantCode)) {
-      return second;
-    }
-
-    return null;
-  }
-
-  function isUnavailable(option) {
-    return (
-      option.element.classList.contains('ec-product-disabled') ||
-      option.element.classList.contains('ec-product-soldout')
-    );
-  }
-
-  function updatePickerState(picker, groups, variantCodes) {
-    picker.querySelectorAll('.ignis-quantity-option').forEach(function (
-      button,
-    ) {
-      var quantity = Number(button.dataset.quantity);
-      var options = groups.get(quantity);
-      var nextOption = getNextSourceOption(options, variantCodes);
-      var exhausted = nextOption === null;
-      var unavailable = nextOption ? isUnavailable(nextOption) : false;
-      var status = button.querySelector('.ignis-quantity-status');
-
-      button.disabled = exhausted || unavailable;
-      button.classList.toggle('is-exhausted', exhausted);
-      button.classList.toggle('is-unavailable', unavailable);
-      button.dataset.nextOrder = nextOption
-        ? String(nextOption.order)
-        : '';
-
-      if (status) {
-        status.textContent = unavailable ? '품절' : '담기 완료';
-        status.hidden = !button.disabled;
-      }
-
-    });
-
-  }
-
-  function refreshPickerState(picker, groups, callback) {
-    getCartVariantCodes(function (variantCodes) {
-      updatePickerState(picker, groups, variantCodes);
-
-      if (callback) {
-        callback(variantCodes);
-      }
-    });
-  }
-
-  function selectQuantity(picker, groups, quantity) {
-    refreshPickerState(picker, groups, function (variantCodes) {
-      var button = picker.querySelector(
-        '.ignis-quantity-option[data-quantity="' + quantity + '"]',
-      );
-      var nextOption = getNextSourceOption(
-        groups.get(Number(quantity)),
-        variantCodes,
-      );
-
-      if (!button || button.disabled || !nextOption) {
-        return;
-      }
-
-      if (isUnavailable(nextOption)) {
-        updatePickerState(picker, groups, variantCodes);
-        return;
-      }
-
-      var nativeLink = nextOption.element.querySelector('a');
-
-      if (!nativeLink) {
-        return;
-      }
-
-      nativeLink.click();
-      setSelectedQuantity(picker, Number(quantity));
-    });
   }
 
   function createPicker(sourceList, groups, originalPrice) {
@@ -366,10 +261,9 @@
         return;
       }
 
-      selectQuantity(picker, groups, button.dataset.quantity);
+      handleClickQuantity(picker, groups, button.dataset.quantity);
     });
 
-    refreshPickerState(picker, groups);
   }
 
   function enhanceQuantityOptions() {
