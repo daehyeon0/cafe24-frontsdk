@@ -74,16 +74,15 @@ test('GET /script-ignis.js serves the static JavaScript file', async () => {
   const baseUrl = await startServer(app);
 
   const response = await fetch(`${baseUrl}/script-ignis.js`);
+  const script = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(
     response.headers.get('content-type'),
     /^text\/javascript; charset=utf-8$/,
   );
-  assert.equal(
-    await response.text(),
-    '// Ignis browser script entry point.\n',
-  );
+  assert.match(script, /^\(function initIgnisQuantityPicker/);
+  assert.match(script, /var QUANTITY_OPTIONS = Object\.freeze/);
 });
 
 test('GET /oauth/authorize exchanges the code and creates a script tag', async () => {
