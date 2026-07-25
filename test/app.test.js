@@ -25,7 +25,7 @@ async function startServer(app) {
   return `http://127.0.0.1:${port}`;
 }
 
-test('GET / renders a Cafe24 OAuth request button', async () => {
+test('GET / renders Cafe24 OAuth buttons for production and preview', async () => {
   const app = createApp();
   const baseUrl = await startServer(app);
 
@@ -50,15 +50,31 @@ test('GET / renders a Cafe24 OAuth request button', async () => {
     html,
     /<input type="hidden" name="state" value="886321e3baf3">/,
   );
+  assert.equal(
+    html.match(/<form method="get" action="https:\/\/df6d\.cafe24api\.com\/api\/v2\/oauth\/authorize">/g)
+      ?.length,
+    2,
+  );
   assert.match(
     html,
     /<input type="hidden" name="redirect_uri" value="https:\/\/cafe24-frontsdk\.vercel\.app\/oauth\/authorize">/,
   );
   assert.match(
     html,
+    /<input type="hidden" name="redirect_uri" value="https:\/\/cafe24-frontsdk-6lci2feqg-dd70296-1022s-projects\.vercel\.app\/oauth\/authorize">/,
+  );
+  assert.match(
+    html,
     /<input type="hidden" name="scope" value="mall\.write_order mall\.read_application mall\.write_application">/,
   );
-  assert.match(html, /<button type="submit">Cafe24 OAuth 인증<\/button>/);
+  assert.match(
+    html,
+    /<button type="submit" title="운영 배포 script 설정">운영 배포 script 설정<\/button>/,
+  );
+  assert.match(
+    html,
+    /<button type="submit" title="프리뷰 배포 script 설정">프리뷰 배포 script 설정<\/button>/,
+  );
 });
 
 test('the default export handles requests as an Express application', async () => {
@@ -85,7 +101,7 @@ test('GET /script-ignis.js serves the static JavaScript file', async () => {
   assert.match(script, /var QUANTITY_OPTIONS = Object\.freeze/);
 });
 
-test('GET /oauth/authorize exchanges the code and creates a script tag', async () => {
+test('GET /oauth/authorize replaces existing script tags with the production script', async () => {
   const fetchCalls = [];
   const logs = [];
   const app = createApp({
@@ -109,6 +125,19 @@ test('GET /oauth/authorize exchanges the code and creates a script tag', async (
         );
       }
 
+      if (options.method === 'DELETE') {
+        return new Response(null, { status: 204 });
+      }
+
+      if (url.includes('?shop_no=1')) {
+        return new Response(
+          JSON.stringify({
+            scripttags: [{ script_no: 100 }],
+          }),
+          { status: 200 },
+        );
+      }
+
       return new Response(
         JSON.stringify({
           scripttag: {
@@ -128,6 +157,7 @@ test('GET /oauth/authorize exchanges the code and creates a script tag', async (
       info: (...args) => logs.push(args),
       error: (...args) => logs.push(args),
     },
+    vercelEnv: 'prod',
   });
   const baseUrl = await startServer(app);
 
@@ -145,7 +175,7 @@ test('GET /oauth/authorize exchanges the code and creates a script tag', async (
       },
     },
   });
-  assert.equal(fetchCalls.length, 2);
+  assert.equal(fetchCalls.length, 4);
   assert.equal(
     fetchCalls[0][0],
     'https://df6d.cafe24api.com/api/v2/oauth/token',
@@ -161,14 +191,24 @@ test('GET /oauth/authorize exchanges the code and creates a script tag', async (
   );
   assert.equal(
     fetchCalls[1][0],
+    'https://df6d.cafe24api.com/api/v2/admin/scripttags?shop_no=1',
+  );
+  assert.equal(fetchCalls[1][1].method, undefined);
+  assert.equal(
+    fetchCalls[2][0],
+    'https://df6d.cafe24api.com/api/v2/admin/scripttags/100?shop_no=1',
+  );
+  assert.equal(fetchCalls[2][1].method, 'DELETE');
+  assert.equal(
+    fetchCalls[3][0],
     'https://df6d.cafe24api.com/api/v2/admin/scripttags',
   );
-  assert.equal(fetchCalls[1][1].method, 'POST');
+  assert.equal(fetchCalls[3][1].method, 'POST');
   assert.equal(
-    fetchCalls[1][1].headers.Authorization,
+    fetchCalls[3][1].headers.Authorization,
     'Bearer access-token',
   );
-  assert.deepEqual(JSON.parse(fetchCalls[1][1].body), {
+  assert.deepEqual(JSON.parse(fetchCalls[3][1].body), {
     shop_no: 1,
     request: {
       src: 'https://cafe24-frontsdk.vercel.app/script-ignis.js',
@@ -190,6 +230,45 @@ test('GET /oauth/authorize exchanges the code and creates a script tag', async (
       },
     ],
   ]);
+});
+
+test('GET /oauth/authorize uses the preview script outside prod', async () => {
+  const fetchCalls = [];
+  const app = createApp({
+    cafe24ClientSecret: 'client-secret',
+    vercelEnv: 'preview',
+    logger: { info: () => {}, error: () => {} },
+    fetchImpl: async (url, options = {}) => {
+      fetchCalls.push([url, options]);
+
+      if (url.endsWith('/oauth/token')) {
+        return new Response(
+          JSON.stringify({ access_token: 'access-token' }),
+          { status: 200 },
+        );
+      }
+
+      if (url.includes('?shop_no=1')) {
+        return new Response(JSON.stringify({ scripttags: [] }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ scripttag: { script_no: 123 } }), {
+        status: 201,
+      });
+    },
+  });
+  const baseUrl = await startServer(app);
+
+  const response = await fetch(
+    `${baseUrl}/oauth/authorize?code=authorization-code&state=886321e3baf3`,
+  );
+
+  assert.equal(response.status, 201);
+  assert.equal(fetchCalls.length, 3);
+  assert.equal(
+    JSON.parse(fetchCalls[2][1].body).request.src,
+    'https://cafe24-frontsdk-6lci2feqg-dd70296-1022s-projects.vercel.app/script-ignis.js',
+  );
 });
 
 test('GET /oauth/authorize rejects requests without an authorization code', async () => {
