@@ -28,7 +28,7 @@
     }),
   });
 
-  var OPTION_LABEL_PATTERN = /^(\d+)개입_([12])$/;
+  var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+)$/;
   var OPTION_SOURCE_SELECTOR =
     '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
   var UNSELECTED_QUANTITY_VALUE = -1;
@@ -75,19 +75,19 @@
     return {
       quantity: Number(match[1]),
       order: Number(match[2]),
+      optionValue: element.getAttribute('option_value'),
       element: element,
     };
   }
 
-  function getQuantityGroups(sourceList) {
-    var sourceElements = Array.from(sourceList.children).filter(function (
-      element,
-    ) {
-      return element.tagName === 'LI';
-    });
+  function getQuantityGroups() {
+    var sourceElements = Array.from(
+      document.querySelectorAll('.xans-product-option .ec-product-button > li'),
+    );
+
     var sourceOptions = sourceElements.map(getSourceOption).filter(function (option) {
       return !!option
-    });
+    }).sort(function (a, b) { return a - b });
 
     if (sourceOptions.length === 0) {
       return null;
@@ -138,15 +138,61 @@
     });
   }
 
+  function getSelectableQuantityOption(options) {
+    if (!options) {
+      return null;
+    }
+
+    var selectedOptionValues = new Set(
+      Array.from(
+        document.querySelectorAll(
+          '.option_products > .option_product input[type="hidden"]',
+        ),
+      ).map(function (input) {
+        return input.value;
+      }),
+    );
+
+    return options.find(function (option) {
+      return !selectedOptionValues.has(option.optionValue);
+    });
+  }
+
+  function observeAddOptionInput(optionValue, value) {
+    var observer = new MutationObserver(function () {
+      var inputAddOption = Array.from(
+        document.querySelectorAll(
+          '.xans-product-addoption .input_addoption',
+        ),
+      ).find(function (element) {
+        return element.getAttribute('add_product_code') === optionValue;
+      });
+
+      if (!inputAddOption) {
+        return;
+      }
+
+      observer.disconnect();
+      inputAddOption.value = value;
+      inputAddOption.dispatchEvent(new Event('input', { bubbles: true }));
+      inputAddOption.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    observer.observe(document.querySelector('#totalProducts'), {
+      childList: true,
+      subtree: true,
+    });
+    window.setTimeout(function () {
+      observer.disconnect();
+    }, 10000);
+  }
+
   function handleClickQuantity(quantity) {
     var picker = document.querySelector('.ignis-quantity-picker');
     var nextQuantity = Number(quantity);
 
     if (nextQuantity !== UNSELECTED_QUANTITY_VALUE) {
-      var sourceList = document.querySelector(
-        '.ec-product-button[data-ignis-quantity-enhanced]',
-      );
-      var groups = sourceList && getQuantityGroups(sourceList);
+      var groups = getQuantityGroups();
       var options = groups && groups.get(nextQuantity);
 
       if (!options) {
@@ -154,12 +200,10 @@
         return;
       }
 
-      var selectableOption = options.find(function (option) {
-        return !option.element.classList.contains('ec-product-selected');
-      });
+      var selectableOption = getSelectableQuantityOption(options);
 
       if (isUnavailable(options) || !selectableOption) {
-        window.alert('선택할 수 없는 수량입니다.');
+        window.alert('이미 선택한 옵션입니다.');
         return;
       }
     }
@@ -265,7 +309,6 @@
     title.textContent = title.textContent.trim() || '옵션 선택 (필수)';
     header.type = 'button';
     header.dataset.expanded = 'true'
-    chevron.setAttribute('aria-hidden', 'true');
     header.append(title, chevron);
 
     header.addEventListener('click', function () {
@@ -313,7 +356,7 @@
       return;
     }
 
-    var groups = getQuantityGroups(optionSource);
+    var groups = getQuantityGroups();
 
     if (groups) {
       createPicker(optionSource, groups, originalPrice);
@@ -321,7 +364,6 @@
   }
 
   function getSelectedFlavorTotal() {
-
     return Object.keys(selectedFlavor).reduce(function (sum, index) {
       return sum + selectedFlavor[index];
     }, 0);
@@ -337,6 +379,8 @@
     flavorOptions.dataset.hidden = String(
       selectedQuantity === UNSELECTED_QUANTITY_VALUE,
     );
+    flavorOptions.querySelector('header .quantity').textContent =
+      String(selectedQuantity);
     flavorOptions.querySelectorAll('.ignis-flavor-option').forEach(
       function (option) {
         var output = option.querySelector('output');
@@ -431,25 +475,53 @@
 
     sheet.className = 'ignis-flavor-options';
     sheet.dataset.hidden = 'true';
-    sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-modal', 'true');
-    sheet.setAttribute('aria-label', '50개입 맛 선택');
     sheet.innerHTML =
       '<div class="ignis-flavor-sheet">' +
-      '<header><strong>50개입 맛 선택</strong><button type="button" data-close aria-label="닫기">×</button></header>' +
+      '<header><strong><span class="quantity">nn</span>개입 맛 선택</strong><button type="button" data-close aria-label="닫기">×</button></header>' +
       '<ul>' + options + '</ul>' +
       '<p class="ignis-flavor-total">총 수량 <strong>(0/30개)</strong></p>' +
       '<button type="button" class="ignis-flavor-confirm" disabled>선택완료</button>' +
       '</div>';
 
     sheet.addEventListener('click', function (event) {
+      var confirmButton = event.target.closest('.ignis-flavor-confirm');
+      if (confirmButton) {
+        var groups = getQuantityGroups();
+        var quantityOptions = groups && groups.get(selectedQuantity);
+        var selectableOption = getSelectableQuantityOption(quantityOptions);
+        var nativeLink = selectableOption && selectableOption.element.querySelector('a');
+
+        if (!nativeLink) {
+          window.alert('이미 선택한 옵션입니다.');
+          return;
+        }
+
+        var flavorValue = Object.keys(selectedFlavor)
+          .filter(function (index) {
+            return selectedFlavor[index] > 0;
+          })
+          .map(function (index) {
+            return `${flavors[index].title} * ${selectedFlavor[index]}`;
+          })
+          .join(',');
+
+        observeAddOptionInput(selectableOption.optionValue, flavorValue);
+        nativeLink.click();
+        handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
+        return;
+      }
+
+
       var closeButton = event.target.closest('[data-close]');
-      if (event.target === closeButton) {
+      if (closeButton) {
         handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
         return;
       }
 
       var changeButton = event.target.closest('[data-change]');
+      if (!changeButton) {
+        return;
+      }
 
       var option = changeButton.closest('.ignis-flavor-option');
       var index = option.dataset.index;
