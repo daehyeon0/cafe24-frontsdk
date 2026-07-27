@@ -3,9 +3,23 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { JSDOM } from 'jsdom';
 
-const script = await readFile(
+const coreScript = await readFile(
+  new URL(
+    '../cafe24/web/js/product-detail-enhance-options-core.js',
+    import.meta.url,
+  ),
+  'utf8',
+);
+const pcScript = await readFile(
   new URL(
     '../cafe24/skin1/js/module/product/product-detail-enhance-options.js',
+    import.meta.url,
+  ),
+  'utf8',
+);
+const mobileScript = await readFile(
+  new URL(
+    '../cafe24/mobile/js/module/product/detail-enhance-options.js',
     import.meta.url,
   ),
   'utf8',
@@ -154,7 +168,8 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     });
   });
 
-  dom.window.eval(script);
+  dom.window.eval(coreScript);
+  dom.window.eval(pcScript);
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
   await wait();
 
@@ -364,5 +379,66 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
   );
   assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, true);
 
+  dom.window.close();
+});
+
+test('모바일 어댑터는 PackSize 선택 시 BottomSheet를 연다', async () => {
+  const dom = new JSDOM(
+    `<!doctype html>
+      <input id="product_price" value="32900">
+      <div class="xans-product-option">
+        <table><tbody><tr>
+          <th>옵션 선택 (필수)</th>
+          <td>
+            <ul class="ec-product-button">
+              <li title="10개입_1" option_value="P000000L000N">
+                <a href="#none"><span>10개입_1</span></a>
+              </li>
+            </ul>
+            <p class="value">옵션을 선택해 주세요</p>
+          </td>
+        </tr></tbody></table>
+      </div>
+      <div id="totalProducts">
+        <table><tbody class="option_products"></tbody></table>
+      </div>`,
+    {
+      pretendToBeVisual: true,
+      runScripts: 'outside-only',
+      url: 'https://df6d.cafe24.com/m/product/detail.html?product_no=11',
+    },
+  );
+  const { document, Event, HTMLDialogElement } = dom.window;
+
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+
+  dom.window.eval(mobileScript);
+  dom.window.eval(coreScript);
+  document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
+  await wait();
+
+  const dialog = document.querySelector('.ignis-flavor-options');
+
+  assert.equal(dialog.tagName, 'DIALOG');
+  assert.equal(dialog.parentElement, document.body);
+  assert.equal(dialog.open, false);
+  assert.equal(dialog.dataset.hidden, 'true');
+
+  document
+    .querySelector('.ignis-quantity-option[data-quantity="10"]')
+    .click();
+
+  assert.equal(dialog.open, true);
+  assert.equal(dialog.dataset.hidden, 'false');
+
+  dialog.querySelector('[data-close]').click();
+
+  assert.equal(dialog.open, false);
+  assert.equal(dialog.dataset.hidden, 'true');
   dom.window.close();
 });
