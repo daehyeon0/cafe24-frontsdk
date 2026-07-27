@@ -215,7 +215,7 @@
         };
       }
 
-      function getQuantityGroups() {
+      function getPackSizeGrops() {
         var sourceOptions = Array.from(
           document.querySelectorAll(
             OPTION_LIST_SELECTOR + ' > li',
@@ -252,7 +252,7 @@
       }
 
       function getSelectableOption(packSize) {
-        var options = getQuantityGroups().get(Number(packSize)) || [];
+        var options = getPackSizeGrops().get(Number(packSize)) || [];
         var selectedOptionValues = new Set(
           Array.from(
             document.querySelectorAll(
@@ -272,10 +272,10 @@
       }
 
       function getPackSizes() {
-        return Array.from(getQuantityGroups().keys());
+        return Array.from(getPackSizeGrops().keys());
       }
 
-      function getEnhancementTarget() {
+      function getPackSizeEnhancementTarget() {
         return document.querySelector(
           OPTION_LIST_SELECTOR +
             ':not([data-ignis-quantity-enhanced])',
@@ -529,7 +529,7 @@
 
       return {
         commitSelection: commitSelection,
-        getEnhancementTarget: getEnhancementTarget,
+        getPackSizeEnhancementTarget: getPackSizeEnhancementTarget,
         getPackSizes: getPackSizes,
         isPackSizeSelectable: isPackSizeSelectable,
         isSelectionPending: isSelectionPending,
@@ -747,8 +747,8 @@
 
     }
 
-    function enhanceQuantityOptions() {
-      var optionSource = cafe24OptionAdapter.getEnhancementTarget();
+    function enhancePackSizeOptions() {
+      var optionSource = cafe24OptionAdapter.getPackSizeEnhancementTarget();
       var originalPrice = getOriginalPrice();
 
       if (!optionSource || originalPrice === null) {
@@ -912,7 +912,7 @@
     }
 
     function boot() {
-      enhanceQuantityOptions();
+      enhancePackSizeOptions();
       createFlavorOptions();
     }
 
