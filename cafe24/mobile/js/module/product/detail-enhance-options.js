@@ -770,9 +770,9 @@
       return;
     }
 
-    flavorPicker.dataset.hidden = String(
-      state.packSize === UNSELECTED_PACK_SIZE_VALUE,
-    );
+    var isHidden = state.packSize === UNSELECTED_PACK_SIZE_VALUE;
+
+    flavorPicker.dataset.hidden = String(isHidden);
     flavorPicker.querySelector('header .quantity').textContent =
       String(state.packSize);
     flavorPicker.querySelectorAll('.ignis-flavor-option').forEach(
@@ -791,6 +791,12 @@
       `(${state.selectedQuantity}/${state.targetQuantity}개)`;
     flavorPicker.querySelector('.ignis-flavor-confirm').disabled =
       !state.canConfirm;
+
+    if (isHidden && flavorPicker.open) {
+      flavorPicker.close();
+    } else if (!isHidden && !flavorPicker.open) {
+      flavorPicker.showModal();
+    }
   }
 
   function createFlavorOptions() {
@@ -821,13 +827,14 @@
           '</li>';
       })
       .join('');
-    var sheet = document.createElement('section');
+    var sheet = document.createElement('dialog');
 
     sheet.className = 'ignis-flavor-options';
     sheet.dataset.hidden = 'true';
+    sheet.setAttribute('aria-labelledby', 'ignis-flavor-sheet-title');
     sheet.innerHTML =
       '<div class="ignis-flavor-sheet">' +
-      '<header><strong><span class="quantity">nn</span>개입 맛 선택</strong><button type="button" data-close aria-label="닫기">×</button></header>' +
+      '<header><strong id="ignis-flavor-sheet-title"><span class="quantity">nn</span>개입 맛 선택</strong><button type="button" data-close aria-label="닫기">×</button></header>' +
       '<ul>' + options + '</ul>' +
       '<p class="ignis-flavor-total">총 수량 <strong>(0/30개)</strong></p>' +
       '<button type="button" class="ignis-flavor-confirm" disabled>선택완료</button>' +
@@ -835,6 +842,11 @@
 
     sheet.addEventListener('click', function (event) {
       if (cafe24OptionAdapter.isSelectionPending()) {
+        return;
+      }
+
+      if (event.target === sheet) {
+        handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
         return;
       }
 
@@ -888,7 +900,12 @@
       );
     });
 
-    picker.insertAdjacentElement('afterend', sheet);
+    sheet.addEventListener('cancel', function (event) {
+      event.preventDefault();
+      handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
+    });
+
+    document.body.append(sheet);
     renderSelection(selection.snapshot());
   }
 

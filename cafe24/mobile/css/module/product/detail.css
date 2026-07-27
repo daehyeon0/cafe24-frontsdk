@@ -361,19 +361,28 @@
 }
 
 /* Ignis 맛 선택 */
-.ignis-flavor-options { width:100%; margin:8px 0; }
-.ignis-flavor-options[data-hidden="true"] { display:none; }
-.ignis-flavor-sheet { overflow:hidden; border:1px solid #eee; background:#fff; color:#222; font:12px/1.35 Arial,sans-serif; }
-.ignis-flavor-sheet header { display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 10px; background:#f5f5f5; }
-.ignis-flavor-sheet header button { border:0; background:transparent; color:#555; font-size:22px; cursor:pointer; }
-.ignis-flavor-sheet ul { margin:0; padding:5px 10px; list-style:none; }
+html:has(.ignis-flavor-options[open]), body:has(.ignis-flavor-options[open]) { overflow:hidden; }
+.ignis-flavor-options:not([open]) { display:none; }
+.ignis-flavor-options { position:fixed; inset:auto 0 0; box-sizing:border-box; width:100%; max-width:600px; max-height:calc(100dvh - 24px); margin:0 auto; padding:0; border:0; background:transparent; overflow:visible; }
+.ignis-flavor-options::backdrop { background:rgba(0,0,0,.4); animation:ignis-flavor-backdrop-in 200ms ease-out; }
+.ignis-flavor-sheet { display:flex; overflow:hidden; max-height:calc(100dvh - 24px); padding-bottom:env(safe-area-inset-bottom); border-radius:16px 16px 0 0; background:#fff; color:#222; flex-direction:column; font:12px/1.35 Arial,sans-serif; animation:ignis-flavor-sheet-in 240ms cubic-bezier(.22,1,.36,1); }
+.ignis-flavor-sheet:before { content:""; flex:0 0 auto; width:36px; height:4px; margin:8px auto 2px; border-radius:2px; background:#d6d6d6; }
+.ignis-flavor-sheet header { display:flex; flex:0 0 auto; align-items:center; justify-content:space-between; min-height:48px; padding:0 10px 0 16px; background:#fff; }
+.ignis-flavor-sheet header button { width:44px; height:44px; border:0; background:transparent; color:#555; font-size:22px; cursor:pointer; }
+.ignis-flavor-sheet ul { overflow-y:auto; flex:1 1 auto; margin:0; padding:5px 16px; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; list-style:none; }
 .ignis-flavor-option { display:flex; align-items:center; gap:9px; min-height:51px; }
 .ignis-flavor-option + .ignis-flavor-option { border-top: 1px solid #eee; }
 .ignis-flavor-image { flex:0 0 32px; width:32px; height:32px; object-fit:contain; }
 .ignis-flavor-copy { display:flex; min-width:0; flex:1; flex-direction:column; }.ignis-flavor-copy em { color:#f04a22; font-size:9px; font-style:normal; }.ignis-flavor-copy strong { font-size:11px; }.ignis-flavor-copy small { color:#999; font-size:9px; }.ignis-flavor-option.is-soldout { opacity:.45; }.ignis-flavor-soldout { color:#999; font-size:11px; }
 .ignis-flavor-stepper { display:flex; overflow:hidden; border:1px solid #ddd; border-radius:3px; }.ignis-flavor-stepper button,.ignis-flavor-stepper output { width:27px; height:21px; border:0; background:#fff; color:#555; line-height:21px; text-align:center; }.ignis-flavor-stepper button { cursor:pointer; }.ignis-flavor-stepper button + output { border-right:1px solid #eee; border-left:1px solid #eee; }
-.ignis-flavor-total { margin:0; padding:9px 10px; border-top:1px solid #eee; text-align:right; }.ignis-flavor-total strong { color:#ed4e20; }
-.ignis-flavor-confirm { width:calc(100% - 12px); height:30px; margin:0 6px 7px; border:0; border-radius:2px; background:#ef4d28; color:#fff; }.ignis-flavor-confirm:disabled { background:#ddd; color:#999; }
+.ignis-flavor-total { flex:0 0 auto; margin:0; padding:12px 16px; border-top:1px solid #eee; text-align:right; }.ignis-flavor-total strong { color:#ed4e20; }
+.ignis-flavor-confirm { flex:0 0 auto; width:calc(100% - 32px); height:44px; margin:0 16px 12px; border:0; border-radius:4px; background:#ef4d28; color:#fff; }.ignis-flavor-confirm:disabled { background:#ddd; color:#777; }
+@keyframes ignis-flavor-sheet-in { from { transform:translateY(100%); } to { transform:translateY(0); } }
+@keyframes ignis-flavor-backdrop-in { from { background:rgba(0,0,0,0); } to { background:rgba(0,0,0,.4); } }
+@media (prefers-reduced-motion:reduce) {
+    .ignis-flavor-sheet,
+    .ignis-flavor-options::backdrop { animation:none; }
+}
 
 /* Ignis 선택 상품 */
 #totalProducts > table:has(.ignis-option-basket-item) { width:100%; }
