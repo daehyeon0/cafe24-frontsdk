@@ -197,19 +197,9 @@
 #totalProducts table .right { padding-right:9px; font-weight:bold; color:#008bcc; text-align:right; }
 #totalProducts thead th { height:0; padding:0; font-size:0; line-height:0; }
 #totalProducts tbody th { vertical-align:middle; }
-#totalProducts tbody td { padding:9px 0; border-top:1px solid #ebebeb; color:#353535; line-height:18px; vertical-align:middle; word-wrap:break-word; word-break:break-all; }
-#totalProducts tbody td p { padding:7px 10px 0 0; font-weight:bold; line-height:21px; }
 #totalProducts tbody td p.product span { font-weight:normal; color:#757575; line-height:18px; }
 #totalProducts tbody td p.product span.soldOut { color:#008bcc; }
 #totalProducts tbody td img { vertical-align:middle; }
-#totalProducts tbody td .quantity { display:inline-block; position:relative; width:50px; vertical-align:top; }
-#totalProducts tbody td .quantity input { width:22px; height:23px; padding:0 2px 0 3px; line-height:23px; border:1px solid #d4d8d9; border-radius:3px 0 0 3px; }
-#totalProducts tbody td .quantity .up { position:absolute; left:28px; top:0; }
-#totalProducts tbody td .quantity .down { position:absolute; left:28px; top:12px; }
-    #totalProducts tbody.option_products tr td .quantity input,
-    #totalProducts tbody.add_products tr td .quantity input { height:19px; line-height:19px; }
-    #totalProducts tbody.option_products tr td .quantity .down,
-    #totalProducts tbody.add_products tr td .quantity .down { bottom:0; top:auto; }
 #totalProducts tbody td .mileage { display:block; white-space:nowrap; }
 #totalProducts tbody td .mileage_price { }
 #totalProducts tbody tr.option td{border-top: 1px solid #ebebeb;}

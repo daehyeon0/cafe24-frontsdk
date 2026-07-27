@@ -1,6 +1,51 @@
 (function initIgnisQuantityPicker(window, document) {
   'use strict';
 
+  var flavorOptions = [
+    {
+      title: '떡볶이맛 (10개입)',
+      description: '130kcal, 단백질 18g',
+      highlight: '신제품 출시!',
+      isSoldout: false,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_떡볶이맛전면_원본_0524.png',
+    },
+    {
+      title: '버터치킨커리맛 (10개입)',
+      description: '105kcal, 단백질 18g',
+      highlight: '',
+      isSoldout: true,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_버터치킨커리맛(전면).png',
+    },
+    {
+      title: '핫양념치킨맛 (10개입)',
+      description: '125kcal, 단백질 19g',
+      highlight: '',
+      isSoldout: false,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_핫양념치킨맛전면_원본_0524.png',
+    },
+    {
+      title: '치폴레마요맛 (10개입)',
+      description: '125kcal, 단백질 18g',
+      highlight: '',
+      isSoldout: false,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_치폴레마요맛(전면).png',
+    },
+    {
+      title: '허니소이맛 (10개입)',
+      description: '125kcal, 단백질 18g',
+      highlight: '',
+      isSoldout: false,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_허니소이전면_원본_0814.png',
+    },
+    {
+      title: '왕갈비맛 (10개입)',
+      description: '125kcal, 단백질 18g',
+      highlight: '',
+      isSoldout: false,
+      img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_왕갈비맛전면_원본.png',
+    },
+  ];
+
   var QUANTITY_OPTIONS = Object.freeze({
     10: Object.freeze({
       price: 24700,
@@ -34,6 +79,7 @@
   var UNSELECTED_QUANTITY_VALUE = -1;
   var selectedQuantity = UNSELECTED_QUANTITY_VALUE; // -1: 미선택, 10, 30, 50, 100: 각 수량
   var selectedFlavor = {};
+  var selectedOptionBasketItems = new Map();
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
@@ -158,9 +204,15 @@
     });
   }
 
-  function observeAddOptionInput(optionValue, value) {
+  function observeAddOptionInput(optionValue, value, callback) {
+    var addOptionRoot = document.querySelector('#totalProducts > table');
+
+    if (!addOptionRoot) {
+      return;
+    }
+
     var observer = new MutationObserver(function () {
-      var inputAddOption = Array.from(
+      var addOptionInput = Array.from(
         document.querySelectorAll(
           '.xans-product-addoption .input_addoption',
         ),
@@ -168,17 +220,13 @@
         return element.getAttribute('add_product_code') === optionValue;
       });
 
-      if (!inputAddOption) {
-        return;
-      }
-
       observer.disconnect();
-      inputAddOption.value = value;
-      inputAddOption.dispatchEvent(new Event('input', { bubbles: true }));
-      inputAddOption.dispatchEvent(new Event('change', { bubbles: true }));
+      addOptionInput.value = value;
+      addOptionInput.disabled = true;
+      callback();
     });
 
-    observer.observe(document.querySelector('#totalProducts'), {
+    observer.observe(addOptionRoot, {
       childList: true,
       subtree: true,
     });
@@ -370,18 +418,18 @@
   }
 
   function updateFlavorOptionPicker() {
-    var flavorOptions = document.querySelector('.ignis-flavor-options');
+    var flavorPicker = document.querySelector('.ignis-flavor-options');
 
-    if (!flavorOptions) {
+    if (!flavorPicker) {
       return;
     }
 
-    flavorOptions.dataset.hidden = String(
+    flavorPicker.dataset.hidden = String(
       selectedQuantity === UNSELECTED_QUANTITY_VALUE,
     );
-    flavorOptions.querySelector('header .quantity').textContent =
+    flavorPicker.querySelector('header .quantity').textContent =
       String(selectedQuantity);
-    flavorOptions.querySelectorAll('.ignis-flavor-option').forEach(
+    flavorPicker.querySelectorAll('.ignis-flavor-option').forEach(
       function (option) {
         var output = option.querySelector('output');
 
@@ -393,65 +441,20 @@
 
     var total = getSelectedFlavorTotal();
 
-    flavorOptions.querySelector('.ignis-flavor-total strong').textContent =
+    flavorPicker.querySelector('.ignis-flavor-total strong').textContent =
       `(${total * 10}/${selectedQuantity}개)`;
-    flavorOptions.querySelector('.ignis-flavor-confirm').disabled = total * 10 !== selectedQuantity;
+    flavorPicker.querySelector('.ignis-flavor-confirm').disabled = total * 10 !== selectedQuantity;
   }
 
   function createFlavorOptions() {
     var picker = document.querySelector('.ignis-quantity-picker');
-    var flavorOptions = document.querySelector('.ignis-flavor-options');
+    var flavorPicker = document.querySelector('.ignis-flavor-options');
 
-    if (!picker || flavorOptions) {
+    if (!picker || flavorPicker) {
       return;
     }
 
-    var flavors = [
-      {
-        title: '떡볶이맛 (10개입)',
-        description: '130kcal, 단백질 18g',
-        highlight: '신제품 출시!',
-        isSoldout: false,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_떡볶이맛전면_원본_0524.png',
-      },
-      {
-        title: '버터치킨커리맛 (10개입)',
-        description: '105kcal, 단백질 18g',
-        highlight: '',
-        isSoldout: true,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_버터치킨커리맛(전면).png',
-      },
-      {
-        title: '핫양념치킨맛 (10개입)',
-        description: '125kcal, 단백질 19g',
-        highlight: '',
-        isSoldout: false,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_핫양념치킨맛전면_원본_0524.png',
-      },
-      {
-        title: '치폴레마요맛 (10개입)',
-        description: '125kcal, 단백질 18g',
-        highlight: '',
-        isSoldout: false,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_치폴레마요맛(전면).png',
-      },
-      {
-        title: '허니소이맛 (10개입)',
-        description: '125kcal, 단백질 18g',
-        highlight: '',
-        isSoldout: false,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_허니소이전면_원본_0814.png',
-      },
-      {
-        title: '왕갈비맛 (10개입)',
-        description: '125kcal, 단백질 18g',
-        highlight: '',
-        isSoldout: false,
-        img: 'https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/product/product-img/통살소스_왕갈비맛전면_원본.png',
-      },
-    ];
-
-    var options = flavors
+    var options = flavorOptions
       .map(function (flavor, index) {
         return '<li class="ignis-flavor-option' +
           (flavor.isSoldout ? ' is-soldout' : '') +
@@ -501,13 +504,29 @@
             return selectedFlavor[index] > 0;
           })
           .map(function (index) {
-            return `${flavors[index].title} * ${selectedFlavor[index]}`;
+            return `${flavorOptions[index].title} * ${selectedFlavor[index]}`;
           })
           .join(',');
 
-        observeAddOptionInput(selectableOption.optionValue, flavorValue);
+        observeAddOptionInput(
+          selectableOption.optionValue,
+          flavorValue,
+          function () {
+            selectedOptionBasketItems.set(
+              selectableOption.optionValue,
+              {
+                quantity: Number(selectedQuantity),
+                flavors: Object.assign({}, selectedFlavor),
+                count: 1,
+              },
+            );
+            handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
+
+
+            // updateOptionBasket();
+          },
+        );
         nativeLink.click();
-        handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
         return;
       }
 
@@ -535,6 +554,80 @@
     });
 
     picker.insertAdjacentElement('afterend', sheet);
+  }
+
+  function getNativeOptionRow(optionValue) {
+    var input = Array.from(
+      document.querySelectorAll('.option_product input'),
+    ).find(function (input) {
+      return input.value === optionValue;
+    });
+
+    return input && input.closest('tr');
+  }
+
+  function updateOptionBasket() {
+    var optionBasket = document.querySelector('.option-basket');
+
+    if (!optionBasket) {
+      return;
+    }
+
+    optionBasket.innerHTML = '';
+    selectedOptionBasketItems.forEach(function (
+      selectedOptionBasketItem,
+      optionValue,
+    ) {
+      var flavorText = Object.keys(selectedOptionBasketItem.flavors)
+        .filter(function (index) {
+          return selectedOptionBasketItem.flavors[index] > 0;
+        })
+        .map(function (index) {
+          return (
+            `${flavorOptions[index].title}*` +
+            selectedOptionBasketItem.flavors[index]
+          );
+        })
+        .join(' + ');
+      var basketItem = document.createElement('div');
+
+      basketItem.className = 'basket-item';
+      basketItem.innerHTML = `
+        <header>
+          <div class="desc">
+            <strong class="quantity">${selectedOptionBasketItem.quantity}개입</strong>
+            <p class="flavor">${flavorText}</p>
+          </div>
+          <button type="button" class="remove" data-basket-action="remove" aria-label="삭제">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.883789 0.883911L10.8838 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+              <path d="M10.8838 0.883911L0.883789 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </header>
+        <footer>
+          <span class="basket-stepper" data-product-id="${optionValue}">
+            <button type="button" data-basket-action="down" aria-label="수량 감소">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <output>${selectedOptionBasketItem.count}</output>
+            <button type="button" data-basket-action="up" aria-label="수량 증가">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </span>
+          <span class="spacer"></span>
+          <strong class="price">${formatWon(
+            QUANTITY_OPTIONS[selectedOptionBasketItem.quantity].price *
+              selectedOptionBasketItem.count,
+          )}</strong>
+        </footer>`;
+      optionBasket.append(basketItem);
+    });
   }
 
   function boot() {
