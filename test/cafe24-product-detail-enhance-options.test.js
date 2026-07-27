@@ -3,6 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { JSDOM } from 'jsdom';
 
+const configScript = await readFile(
+  new URL('../cafe24/web/js/product-detail-config.js', import.meta.url),
+  'utf8',
+);
 const coreScript = await readFile(
   new URL(
     '../cafe24/web/js/product-detail-enhance-options-core.js',
@@ -175,6 +179,7 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     });
   });
 
+  dom.window.eval(configScript);
   dom.window.eval(coreScript);
   dom.window.eval(pcScript);
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
@@ -436,6 +441,7 @@ test('모바일 어댑터는 PackSize 선택 시 BottomSheet를 연다', async (
   );
 
   dom.window.eval(mobileScript);
+  dom.window.eval(configScript);
   dom.window.eval(coreScript);
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
   await wait();
