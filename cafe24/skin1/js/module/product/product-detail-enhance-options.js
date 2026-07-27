@@ -211,7 +211,7 @@
       return;
     }
 
-    var observer = new MutationObserver(function () {
+    var observer = new MutationObserver(function (e) {
       var addOptionInput = Array.from(
         document.querySelectorAll(
           '.xans-product-addoption .input_addoption',
@@ -522,8 +522,8 @@
             );
             handleClickQuantity(UNSELECTED_QUANTITY_VALUE);
 
-
-            // updateOptionBasket();
+            enhanceOptionBasket();
+            updateOptionBasket();
           },
         );
         nativeLink.click();
@@ -566,12 +566,134 @@
     return input && input.closest('tr');
   }
 
+  function replaceQuantityButtonIcon(button, svgMarkup) {
+    var image = button && button.querySelector('img');
+
+    if (!image) {
+      return;
+    }
+
+    var template = document.createElement('template');
+
+    template.innerHTML = svgMarkup.trim();
+
+    var svg = template.content.firstElementChild;
+
+    ['id', 'class'].forEach(function (attribute) {
+      var value = image.getAttribute(attribute);
+
+      if (value !== null) {
+        svg.setAttribute(attribute, value);
+      }
+    });
+    image.replaceWith(svg);
+  }
+
+  function interceptOptionBoxPrice(optionBoxPrice, price) {
+    optionBoxPrice.ignisPriceTarget = price;
+
+    if (!optionBoxPrice.ignisPriceIntercepted) {
+      var descriptor = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(optionBoxPrice),
+        'value',
+      );
+
+      if (!descriptor || !descriptor.get || !descriptor.set) {
+        return;
+      }
+
+      Object.defineProperty(optionBoxPrice, 'value', {
+        configurable: true,
+        enumerable: descriptor.enumerable,
+        get: function () {
+          return descriptor.get.call(this);
+        },
+        set: function (value) {
+          descriptor.set.call(this, value);
+
+          if (this.ignisPriceTarget) {
+            this.ignisPriceTarget.textContent = formatWon(value);
+          }
+        },
+      });
+      optionBoxPrice.ignisPriceIntercepted = true;
+    }
+
+    price.textContent = formatWon(optionBoxPrice.value);
+  }
+
+  function enhanceOptionBasket() {
+    var oldOptionBasketContainer = document.querySelector(
+      '#totalProducts .option_product:not([data-enhanced]) td',
+    );
+
+    oldOptionBasketContainer.querySelector('table').classList.add('displaynone');
+    oldOptionBasketContainer.closest('.option_product').dataset.enhanced =
+      'true';
+
+    var optionBasket = document.createElement('div');
+
+    optionBasket.className = 'option-basket';
+    optionBasket.innerHTML =
+      '<div class="option-basket"></div>';
+    oldOptionBasketContainer.append(optionBasket);
+
+    optionBasket
+      .querySelector('.option-basket')
+      .addEventListener('click', function (event) {
+        var button = event.target.closest(
+          '.basket-stepper [data-basket-action]',
+        );
+
+        if (!button) {
+          return;
+        }
+
+        var stepper = button.closest('.basket-stepper');
+        var selectedOptionBasketItem = selectedOptionBasketItems.get(
+          stepper.dataset.productId,
+        );
+
+        if (!selectedOptionBasketItem) {
+          return;
+        }
+
+        var action = button.dataset.basketAction;
+        var nativeOptionRow = getNativeOptionRow(stepper.dataset.productId);
+        var nativeButton =
+          nativeOptionRow &&
+          nativeOptionRow.querySelector(`.quantity a.${action}`);
+        var change = action === 'up' ? 1 : -1;
+
+        if (nativeButton) {
+          nativeButton.click();
+        }
+
+        selectedOptionBasketItem.count = Math.max(
+          1,
+          selectedOptionBasketItem.count + change,
+        );
+        stepper.querySelector('output').textContent =
+          selectedOptionBasketItem.count;
+        stepper
+          .closest('.basket-item')
+          .querySelector('.price').textContent = formatWon(
+            QUANTITY_OPTIONS[selectedOptionBasketItem.quantity].price *
+              selectedOptionBasketItem.count,
+          );
+      });
+  }
+
   function updateOptionBasket() {
     var optionBasket = document.querySelector('.option-basket');
 
     if (!optionBasket) {
       return;
     }
+
+    var previousBasketItems = Array.from(
+      optionBasket.querySelectorAll('.basket-item'),
+    );
 
     optionBasket.innerHTML = '';
     selectedOptionBasketItems.forEach(function (
@@ -598,35 +720,61 @@
             <strong class="quantity">${selectedOptionBasketItem.quantity}개입</strong>
             <p class="flavor">${flavorText}</p>
           </div>
-          <button type="button" class="remove" data-basket-action="remove" aria-label="삭제">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0.883789 0.883911L10.8838 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-              <path d="M10.8838 0.883911L0.883789 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-            </svg>
-          </button>
         </header>
         <footer>
-          <span class="basket-stepper" data-product-id="${optionValue}">
-            <button type="button" data-basket-action="down" aria-label="수량 감소">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <output>${selectedOptionBasketItem.count}</output>
-            <button type="button" data-basket-action="up" aria-label="수량 증가">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </span>
+          <span class="basket-stepper" data-product-id="${optionValue}"></span>
           <span class="spacer"></span>
-          <strong class="price">${formatWon(
-            QUANTITY_OPTIONS[selectedOptionBasketItem.quantity].price *
-              selectedOptionBasketItem.count,
-          )}</strong>
+          <strong class="price"></strong>
         </footer>`;
       optionBasket.append(basketItem);
+
+      var nativeOptionRow = getNativeOptionRow(optionValue);
+      var previousBasketItem = previousBasketItems.find(function (item) {
+        return (
+          item.querySelector('.basket-stepper').dataset.productId ===
+          optionValue
+        );
+      });
+      var nativeQuantity =
+        (previousBasketItem &&
+          previousBasketItem.querySelector('.basket-stepper .quantity')) ||
+        (nativeOptionRow && nativeOptionRow.querySelector('.quantity'));
+      var nativeDelete =
+        (previousBasketItem &&
+          previousBasketItem.querySelector('header .delete')) ||
+        (nativeOptionRow && nativeOptionRow.querySelector('.delete'));
+      var optionBoxPrice =
+        nativeOptionRow &&
+        nativeOptionRow.querySelector('input.option_box_price');
+
+      if (nativeQuantity) {
+        nativeQuantity.style.width = '';
+        replaceQuantityButtonIcon(
+          nativeQuantity.querySelector('a.down'),
+          `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>`,
+        );
+        replaceQuantityButtonIcon(
+          nativeQuantity.querySelector('a.up'),
+          `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`,
+        );
+        basketItem.querySelector('.basket-stepper').appendChild(nativeQuantity);
+      }
+
+      if (nativeDelete) {
+        basketItem.querySelector('header').appendChild(nativeDelete);
+      }
+
+      if (optionBoxPrice) {
+        interceptOptionBoxPrice(
+          optionBoxPrice,
+          basketItem.querySelector('.price'),
+        );
+      }
     });
   }
 
