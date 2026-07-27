@@ -46,7 +46,7 @@
     },
   ];
 
-  var QUANTITY_OPTIONS = Object.freeze({
+  var SIZEPACK_OPTIONS = Object.freeze({
     10: Object.freeze({
       price: 24700,
       badge: null,
@@ -112,7 +112,7 @@
     function selectPack(nextPackSize) {
       nextPackSize = Number(nextPackSize);
 
-      if (!QUANTITY_OPTIONS[nextPackSize]) {
+      if (!SIZEPACK_OPTIONS[nextPackSize]) {
         return snapshot();
       }
 
@@ -199,7 +199,7 @@
       var match = label.match(OPTION_LABEL_PATTERN);
       var optionValue = element.getAttribute('option_value');
 
-      if (!match || !optionValue || !QUANTITY_OPTIONS[match[1]]) {
+      if (!match || !optionValue || !SIZEPACK_OPTIONS[match[1]]) {
         return null;
       }
 
@@ -673,7 +673,7 @@
     var fragment = document.createDocumentFragment();
 
     packSizes.forEach(function (packSize) {
-      var option = QUANTITY_OPTIONS[packSize];
+      var option = SIZEPACK_OPTIONS[packSize];
       var unitPrice = option.price / packSize;
       var totalPriceBeforeSale = (originalPrice / 10) * packSize;
       var discountRate = 1 - option.price / totalPriceBeforeSale;
