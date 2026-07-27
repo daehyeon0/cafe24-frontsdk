@@ -317,12 +317,15 @@
       var mainRow = basketBody && basketBody.rows[0];
       var product = mainRow && mainRow.querySelector('.product');
       var descriptionCell = product && product.closest('td');
-      var quantity = mainRow && mainRow.querySelector('.quantity');
+      var quantityInput = mainRow && mainRow.querySelector('.quantity_opt');
+      var quantity =
+        quantityInput &&
+        (quantityInput.closest('.quantity') || quantityInput.parentElement);
       var controlsCell = quantity && quantity.closest('td');
-      var quantityInput = quantity && quantity.querySelector('input');
       var quantityUp = quantity && quantity.querySelector('.up');
       var quantityDown = quantity && quantity.querySelector('.down');
       var deleteButton = mainRow && mainRow.querySelector('.delete');
+      var deleteCell = deleteButton && deleteButton.closest('td');
       var priceCell = mainRow && mainRow.querySelector('.right');
       var addOptionRow = nativeTable && nativeTable.querySelector(
         'tbody > tr.option',
@@ -341,6 +344,7 @@
         !quantityUp ||
         !quantityDown ||
         !deleteButton ||
+        !deleteCell ||
         !priceCell ||
         !addOptionRow
       ) {
@@ -366,6 +370,7 @@
         packSize + '개입';
       summary.querySelector('.ignis-selected-option-flavor').textContent =
         flavorValue.replace(/ \* /g, '*').replace(/,/g, ' + ');
+      summary.classList.add('ignis-option-basket-description');
       product.classList.add('ignis-selected-option-original');
       optionRow.classList.add('ignis-option-basket-item');
       basketCell.classList.add('ignis-option-basket-cell');
@@ -373,8 +378,9 @@
       nativeTable.classList.add('ignis-option-basket-table');
       basketBody.classList.add('ignis-option-basket-body');
       mainRow.classList.add('ignis-option-basket-main');
-      descriptionCell.classList.add('ignis-option-basket-description');
+      descriptionCell.classList.add('ignis-option-basket-controls');
       controlsCell.classList.add('ignis-option-basket-controls');
+      deleteCell.classList.add('ignis-option-basket-controls');
       addOptionRow.classList.add('ignis-option-basket-add-option');
       quantity.classList.add('ignis-option-basket-quantity');
       deleteButton.classList.add('ignis-option-basket-delete');
