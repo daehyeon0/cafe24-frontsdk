@@ -186,7 +186,7 @@
   var cafe24OptionAdapter = (function createCafe24OptionAdapter() {
     var OPTION_LIST_SELECTOR =
       '.xans-product-option .ec-product-button';
-    var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+)$/;
+    var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+).*$/;
     var ADD_OPTION_TIMEOUT_MS = 10000;
     var selectionPending = false;
 
@@ -286,6 +286,79 @@
       return selectionPending;
     }
 
+    function normalizeBasketItem(optionRow, packSize, flavorValue) {
+      var nativeTable = optionRow && optionRow.querySelector('td > table');
+      var basketCell = nativeTable && nativeTable.parentElement;
+      var basketBody = nativeTable && nativeTable.tBodies[0];
+      var mainRow = basketBody && basketBody.rows[0];
+      var product = mainRow && mainRow.querySelector('.product');
+      var descriptionCell = product && product.closest('td');
+      var quantity = mainRow && mainRow.querySelector('.quantity');
+      var controlsCell = quantity && quantity.closest('td');
+      var quantityInput = quantity && quantity.querySelector('input');
+      var quantityUp = quantity && quantity.querySelector('.up');
+      var quantityDown = quantity && quantity.querySelector('.down');
+      var deleteButton = mainRow && mainRow.querySelector('.delete');
+      var priceCell = mainRow && mainRow.querySelector('.right');
+      var addOptionRow = nativeTable && nativeTable.querySelector(
+        'tbody > tr.option',
+      );
+
+      if (
+        !nativeTable ||
+        !basketCell ||
+        !basketBody ||
+        !mainRow ||
+        !product ||
+        !descriptionCell ||
+        !quantity ||
+        !controlsCell ||
+        !quantityInput ||
+        !quantityUp ||
+        !quantityDown ||
+        !deleteButton ||
+        !priceCell ||
+        !addOptionRow
+      ) {
+        throw new Error('Cafe24 선택 상품 구조를 해석할 수 없습니다.');
+      }
+
+      var summary = product.parentElement.querySelector(
+        '.ignis-selected-option-summary',
+      );
+
+      if (!summary) {
+        summary = createElement('div', 'ignis-selected-option-summary');
+        summary.append(
+          createElement('strong', 'ignis-selected-option-pack-size'),
+          createElement('p', 'ignis-selected-option-flavor'),
+        );
+        product.insertAdjacentElement('afterend', summary);
+      }
+
+      summary.querySelector('.ignis-selected-option-pack-size').textContent =
+        packSize + '개입';
+      summary.querySelector('.ignis-selected-option-flavor').textContent =
+        flavorValue.replace(/ \* /g, '*').replace(/,/g, ' + ');
+      product.classList.add('ignis-selected-option-original');
+      optionRow.classList.add('ignis-option-basket-item');
+      basketCell.classList.add('ignis-option-basket-cell');
+      nativeTable.classList.remove('displaynone');
+      nativeTable.classList.add('ignis-option-basket-table');
+      basketBody.classList.add('ignis-option-basket-body');
+      mainRow.classList.add('ignis-option-basket-main');
+      descriptionCell.classList.add('ignis-option-basket-description');
+      controlsCell.classList.add('ignis-option-basket-controls');
+      addOptionRow.classList.add('ignis-option-basket-add-option');
+      quantity.classList.add('ignis-option-basket-quantity');
+      deleteButton.classList.add('ignis-option-basket-delete');
+      priceCell.classList.add('ignis-option-basket-price');
+      quantityInput.setAttribute('aria-label', '수량');
+      quantityUp.setAttribute('aria-label', '수량 증가');
+      quantityDown.setAttribute('aria-label', '수량 감소');
+      deleteButton.setAttribute('aria-label', '삭제');
+    }
+
     function commitSelection(packSize, flavorValue) {
       if (selectionPending) {
         return Promise.reject(
@@ -345,7 +418,7 @@
           }
 
           selectionPending = false;
-          resolve(optionRow);
+          resolve();
         }
 
         function findAddedOptionRow() {
@@ -381,7 +454,13 @@
 
           addOptionInput.value = flavorValue;
           addOptionInput.disabled = true;
-          finish(null, optionRow);
+
+          try {
+            normalizeBasketItem(optionRow, packSize, flavorValue);
+            finish(null);
+          } catch (error) {
+            finish(error);
+          }
         }
 
         observer = new MutationObserver(completeWhenOptionRowExists);
@@ -735,12 +814,7 @@
             confirmation.flavorValue,
           )
           .then(
-            function (optionRow) {
-              enhanceNativeOptionBasketItem(
-                optionRow,
-                confirmation.packSize,
-                confirmation.flavorValue,
-              );
+            function () {
               handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
             },
             function (error) {
@@ -777,61 +851,6 @@
 
     picker.insertAdjacentElement('afterend', sheet);
     renderSelection(selection.snapshot());
-  }
-
-  function enhanceNativeOptionBasketItem(
-    optionRow,
-    packSize,
-    flavorValue,
-  ) {
-    var nativeTable =
-      optionRow && optionRow.querySelector('td > table');
-    var product = nativeTable && nativeTable.querySelector(
-      'tbody > tr:first-child .product',
-    );
-
-    if (!optionRow || !nativeTable || !product) {
-      return;
-    }
-
-    var summary = product.parentElement.querySelector(
-      '.ignis-selected-option-summary',
-    );
-
-    if (!summary) {
-      summary = createElement('div', 'ignis-selected-option-summary');
-      summary.append(
-        createElement('strong', 'ignis-selected-option-pack-size'),
-        createElement('p', 'ignis-selected-option-flavor'),
-      );
-      product.insertAdjacentElement('afterend', summary);
-    }
-
-    var quantityInput = optionRow.querySelector('.quantity input');
-    var quantityUp = optionRow.querySelector('.quantity .up');
-    var quantityDown = optionRow.querySelector('.quantity .down');
-    var deleteButton = optionRow.querySelector('.delete');
-
-    summary.querySelector('.ignis-selected-option-pack-size').textContent =
-      packSize + '개입';
-    summary.querySelector('.ignis-selected-option-flavor').textContent =
-      flavorValue.replace(/ \* /g, '*').replace(/,/g, ' + ');
-    product.classList.add('ignis-selected-option-original');
-    nativeTable.classList.remove('displaynone');
-    optionRow.classList.add('ignis-option-basket-item');
-
-    if (quantityInput) {
-      quantityInput.setAttribute('aria-label', '수량');
-    }
-    if (quantityUp) {
-      quantityUp.setAttribute('aria-label', '수량 증가');
-    }
-    if (quantityDown) {
-      quantityDown.setAttribute('aria-label', '수량 감소');
-    }
-    if (deleteButton) {
-      deleteButton.setAttribute('aria-label', '삭제');
-    }
   }
 
   function boot() {

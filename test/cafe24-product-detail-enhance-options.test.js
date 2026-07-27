@@ -216,6 +216,9 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
   assert.deepEqual(clickedOptionValues, ['P000000L000N']);
   assert.equal(document.querySelector('#unrelated-add-option').value, '');
   assert.ok(row.classList.contains('ignis-option-basket-item'));
+  assert.ok(nativeTable.classList.contains('ignis-option-basket-table'));
+  assert.ok(nativeQuantity.classList.contains('ignis-option-basket-quantity'));
+  assert.ok(nativeDelete.classList.contains('ignis-option-basket-delete'));
   assert.ok(!nativeTable.classList.contains('displaynone'));
   assert.equal(document.querySelector('.option-basket'), null);
   assert.equal(
@@ -321,6 +324,38 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
       '.option_box_id[value="P000000L000O"]',
     ),
     null,
+  );
+  assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, false);
+
+  let malformedRow;
+  secondLink.click = () => {
+    optionRows.insertAdjacentHTML(
+      'beforeend',
+      `<tr class="option_product">
+        <td><table><tbody>
+          <tr><td><input class="option_box_id" value="P000000L000O"></td></tr>
+          <tr class="option"><td><div class="xans-product-addoption">
+            <input class="input_addoption" add_product_code="P000000L000O">
+          </div></td></tr>
+          <tr><td><a href="#none" class="delete">삭제</a></td></tr>
+        </tbody></table></td>
+      </tr>`,
+    );
+    malformedRow = optionRows.lastElementChild;
+    malformedRow.querySelector('.delete').addEventListener('click', (event) => {
+      event.preventDefault();
+      malformedRow.remove();
+    });
+  };
+
+  document.querySelector('.ignis-flavor-confirm').click();
+  await wait();
+
+  assert.equal(malformedRow.isConnected, false);
+  assert.equal(errors.at(-1)[0], '[Cafe24 option transaction]');
+  assert.equal(
+    alerts.at(-1),
+    '옵션을 추가하지 못했습니다. 다시 시도해 주세요.',
   );
   assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, false);
 
