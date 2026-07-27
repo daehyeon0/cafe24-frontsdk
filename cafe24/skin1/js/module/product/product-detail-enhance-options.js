@@ -286,6 +286,30 @@
       return selectionPending;
     }
 
+    function injectCustomUiFallbackCss() {
+      var styleId = 'ignis-custom-ui-fallback-css';
+
+      if (document.getElementById(styleId)) {
+        return;
+      }
+
+      var style = document.createElement('style');
+
+      style.id = styleId;
+      style.textContent =
+        '#totalProducts tbody td { padding:9px 0; border-top:1px solid #ebebeb; color:#353535; line-height:18px; vertical-align:middle; word-wrap:break-word; word-break:break-all; }\n' +
+        '#totalProducts tbody td p { padding:7px 10px 0 0; font-weight:bold; line-height:21px; }\n' +
+        '#totalProducts tbody td .quantity { display:inline-block; position:relative; width:50px; vertical-align:top; }\n' +
+        '#totalProducts tbody td .quantity input { width:22px; height:23px; padding:0 2px 0 3px; line-height:23px; border:1px solid #d4d8d9; border-radius:3px 0 0 3px; }\n' +
+        '#totalProducts tbody td .quantity .up { position:absolute; left:28px; top:0; }\n' +
+        '#totalProducts tbody td .quantity .down { position:absolute; left:28px; top:12px; }\n' +
+        '#totalProducts tbody.option_products tr td .quantity input,\n' +
+        '#totalProducts tbody.add_products tr td .quantity input { height:19px; line-height:19px; }\n' +
+        '#totalProducts tbody.option_products tr td .quantity .down,\n' +
+        '#totalProducts tbody.add_products tr td .quantity .down { bottom:0; top:auto; }';
+      document.head.append(style);
+    }
+
     function normalizeBasketItem(optionRow, packSize, flavorValue) {
       var nativeTable = optionRow && optionRow.querySelector('td > table');
       var basketCell = nativeTable && nativeTable.parentElement;
@@ -320,7 +344,9 @@
         !priceCell ||
         !addOptionRow
       ) {
-        throw new Error('Cafe24 선택 상품 구조를 해석할 수 없습니다.');
+        injectCustomUiFallbackCss();
+        console.error('선택 상품 구조를 해석할 수 없습니다.');
+        return;
       }
 
       var summary = product.parentElement.querySelector(

@@ -348,16 +348,21 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     });
   };
 
+  const alertCount = alerts.length;
   document.querySelector('.ignis-flavor-confirm').click();
   await wait();
 
-  assert.equal(malformedRow.isConnected, false);
-  assert.equal(errors.at(-1)[0], '[Cafe24 option transaction]');
+  assert.equal(malformedRow.isConnected, true);
   assert.equal(
-    alerts.at(-1),
-    '옵션을 추가하지 못했습니다. 다시 시도해 주세요.',
+    errors.at(-1)[0],
+    'Cafe24 선택 상품 구조를 해석할 수 없습니다.',
   );
-  assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, false);
+  assert.equal(alerts.length, alertCount);
+  assert.match(
+    document.querySelector('#ignis-custom-ui-fallback-css').textContent,
+    /#totalProducts tbody td \.quantity/,
+  );
+  assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, true);
 
   dom.window.close();
 });

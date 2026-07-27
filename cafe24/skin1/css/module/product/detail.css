@@ -376,19 +376,19 @@
 #totalProducts .ignis-option-basket-item .ignis-selected-option-original { display:none; }
 #totalProducts .ignis-option-basket-item .ignis-selected-option-pack-size { display:block; font-size:20px; line-height:1.3; }
 #totalProducts .ignis-option-basket-item .ignis-selected-option-flavor { margin:8px 0 20px; padding:0; color:#555; font-size:16px; font-weight:400; line-height:1.45; word-break:keep-all; }
-#totalProducts .ignis-option-basket-delete { position:relative; grid-area:delete; align-self:start; justify-self:end; width:24px; height:24px; background:transparent; }
-#totalProducts .ignis-option-basket-delete img,
-#totalProducts .ignis-option-basket-quantity img { display:none; }
-#totalProducts .ignis-option-basket-delete:before,
-#totalProducts .ignis-option-basket-delete:after { content:""; position:absolute; top:11px; left:5px; width:14px; height:1px; background:#697077; }
-#totalProducts .ignis-option-basket-delete:before { transform:rotate(45deg); }
-#totalProducts .ignis-option-basket-delete:after { transform:rotate(-45deg); }
-#totalProducts .ignis-option-basket-quantity { display:grid; overflow:hidden; box-sizing:border-box; grid-area:quantity; grid-template-columns:32px 32px 32px; width:98px !important; height:32px; border:1px solid #d4d4d4; border-radius:4px; background:#fff; }
-#totalProducts .ignis-option-basket-quantity input { grid-column:2; grid-row:1; box-sizing:border-box; width:32px; height:30px; padding:0; border:0; border-right:1px solid #eee; border-left:1px solid #eee; color:#171717; font-size:14px; line-height:30px; text-align:center; }
-#totalProducts .ignis-option-basket-quantity a { position:relative; grid-row:1; width:32px; height:30px; }
-#totalProducts .ignis-option-basket-quantity .down { grid-column:1; }
-#totalProducts .ignis-option-basket-quantity .up { grid-column:3; }
-#totalProducts .ignis-option-basket-quantity a:before,
-#totalProducts .ignis-option-basket-quantity .up:after { content:""; position:absolute; top:15px; left:11px; width:10px; height:1px; background:#171717; }
-#totalProducts .ignis-option-basket-quantity .up:after { transform:rotate(90deg); }
-#totalProducts .ignis-option-basket-price { grid-area:price; align-self:center; padding:0 !important; color:#24292d; font-size:22px; line-height:1.3; white-space:nowrap; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete { position:relative; grid-area:delete; align-self:start; justify-self:end; width:24px; height:24px; background:transparent; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete img,
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity img { display:none; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete:before,
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete:after { content:""; position:absolute; top:11px; left:5px; width:14px; height:1px; background:#697077; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete:before { transform:rotate(45deg); }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-delete:after { transform:rotate(-45deg); }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity { display:grid; overflow:hidden; box-sizing:border-box; grid-area:quantity; grid-template-columns:32px 32px 32px; width:98px !important; height:32px; border:1px solid #d4d4d4; border-radius:4px; background:#fff; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity input { grid-column:2; grid-row:1; box-sizing:border-box; width:32px; height:30px; padding:0; border:0; border-right:1px solid #eee; border-left:1px solid #eee; color:#171717; font-size:14px; line-height:30px; text-align:center; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity a { position:relative; grid-row:1; width:32px; height:30px; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity .down { grid-column:1; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity .up { grid-column:3; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity a:before,
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity .up:after { content:""; position:absolute; top:15px; left:11px; width:10px; height:1px; background:#171717; }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-quantity .up:after { transform:rotate(90deg); }
+#totalProducts .ignis-option-basket-item .ignis-option-basket-price { grid-area:price; align-self:center; padding:0 !important; color:#24292d; font-size:22px; line-height:1.3; white-space:nowrap; }
