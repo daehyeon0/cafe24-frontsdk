@@ -6,7 +6,7 @@
 
   function init(platform) {
     var FLAVOR_OPTIONS = window.FLAVOR_OPTIONS;
-    var SIZEPACK_OPTIONS = window.SIZEPACK_OPTIONS;
+    var PACKSIZE_OPTION = window.PACKSIZE_OPTION;
 
     var UNSELECTED_PACK_SIZE_VALUE = -1;
     var selection = (function createSelection() {
@@ -47,7 +47,7 @@
       function selectPack(nextPackSize) {
         nextPackSize = Number(nextPackSize);
 
-        if (!SIZEPACK_OPTIONS[nextPackSize]) {
+        if (!PACKSIZE_OPTION[nextPackSize]) {
           return snapshot();
         }
 
@@ -118,9 +118,8 @@
         snapshot: snapshot,
       };
     })();
+
     var cafe24OptionAdapter = (function createCafe24OptionAdapter() {
-      var OPTION_LIST_SELECTOR =
-        '.xans-product-option .ec-product-button';
       var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+).*$/;
       var ADD_OPTION_TIMEOUT_MS = 10000;
       var selectionPending = false;
@@ -134,7 +133,7 @@
         var match = label.match(OPTION_LABEL_PATTERN);
         var optionValue = element.getAttribute('option_value');
 
-        if (!match || !optionValue || !SIZEPACK_OPTIONS[match[1]]) {
+        if (!match || !optionValue || !PACKSIZE_OPTION[match[1]]) {
           return null;
         }
 
@@ -149,7 +148,7 @@
       function getPackSizeGrops() {
         var sourceOptions = Array.from(
           document.querySelectorAll(
-            OPTION_LIST_SELECTOR + ' > li',
+            '.xans-product-option .ec-product-button > li',
           ),
         )
           .map(getSourceOption)
@@ -157,10 +156,12 @@
             return !!option;
           })
           .sort(function (left, right) {
-            return (
-              left.packSize - right.packSize ||
-              left.order - right.order
-            );
+            var packSizeDiff = left.packSize - right.packSize
+            if (packSizeDiff === 0) {
+              return left.order - right.order
+            } else {
+              return packSizeDiff
+            }
           });
         var groups = new Map();
 
@@ -208,8 +209,7 @@
 
       function getPackSizeEnhancementTarget() {
         return document.querySelector(
-          OPTION_LIST_SELECTOR +
-            ':not([data-ignis-quantity-enhanced])',
+          '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])',
         );
       }
 
@@ -278,10 +278,7 @@
           !quantityDown ||
           !deleteButton ||
           !priceCell ||
-          !addOptionRow ||
-          (basketElements.extraRequired || []).some(function (element) {
-            return !element;
-          })
+          !addOptionRow
         ) {
           injectCustomUiFallbackCss();
           console.error('Cafe24 선택 상품 구조를 해석할 수 없습니다.');
@@ -591,7 +588,7 @@
       return button;
     }
 
-    function createPicker(sourceList, packSizes, originalPrice) {
+    function createPackSizePicker(sourceList, packSizes, originalPrice) {
       var row = sourceList.closest('tr');
       var cell = sourceList.closest('td');
 
@@ -604,7 +601,7 @@
       var fragment = document.createDocumentFragment();
 
       packSizes.forEach(function (packSize) {
-        var option = SIZEPACK_OPTIONS[packSize];
+        var option = PACKSIZE_OPTION[packSize];
         var unitPrice = option.price / packSize;
         var totalPriceBeforeSale = (originalPrice / 10) * packSize;
         var discountRate = 1 - option.price / totalPriceBeforeSale;
@@ -690,7 +687,7 @@
       var packSizes = cafe24OptionAdapter.getPackSizes();
 
       if (packSizes.length > 0) {
-        createPicker(optionSource, packSizes, originalPrice);
+        createPackSizePicker(optionSource, packSizes, originalPrice);
       }
     }
 

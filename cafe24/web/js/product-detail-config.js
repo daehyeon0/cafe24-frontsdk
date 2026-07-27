@@ -46,7 +46,7 @@
     },
   ];
 
-  window.SIZEPACK_OPTIONS = Object.freeze({
+  window.PACKSIZE_OPTION = Object.freeze({
     10: Object.freeze({
       price: 24700,
       badge: null,
@@ -72,4 +72,5 @@
       }),
     }),
   });
+  console.log('packsize', window.PACKSIZE_OPTION)
 })(window);
