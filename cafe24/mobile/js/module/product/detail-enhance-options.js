@@ -1,6 +1,9 @@
 (function initIgnisProductDetailEnhanceOptions(window, document) {
   'use strict';
 
+  var REQUEST_EVENT = 'ignis:product-detail-enhance-options:request';
+  var READY_EVENT = 'ignis:product-detail-enhance-options:ready';
+
   function getOriginalPriceFallback() {
     var productPrice = document.querySelector('#product_price');
     var originalPrice = Number(
@@ -68,9 +71,15 @@
     mountFlavorSheet: mountFlavorSheet,
   };
 
-  window.IgnisProductDetailEnhanceOptionsPlatform = platform;
+  function connect(event) {
+    if (typeof event.detail !== 'function') {
+      return;
+    }
 
-  if (window.IgnisProductDetailEnhanceOptions) {
-    window.IgnisProductDetailEnhanceOptions(platform);
+    document.removeEventListener(READY_EVENT, connect);
+    event.detail(platform);
   }
+
+  document.addEventListener(READY_EVENT, connect);
+  document.dispatchEvent(new window.CustomEvent(REQUEST_EVENT));
 })(window, document);

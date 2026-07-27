@@ -1,7 +1,10 @@
 (function registerIgnisProductDetailEnhanceOptions(window, document) {
   'use strict';
 
-  window.IgnisProductDetailEnhanceOptions = function init(platform) {
+  var REQUEST_EVENT = 'ignis:product-detail-enhance-options:request';
+  var READY_EVENT = 'ignis:product-detail-enhance-options:ready';
+
+  function init(platform) {
     var FLAVOR_OPTIONS = [
       {
         title: '떡볶이맛 (10개입)',
@@ -918,11 +921,19 @@
     } else {
       boot();
     }
-  };
+  }
 
-  if (window.IgnisProductDetailEnhanceOptionsPlatform) {
-    window.IgnisProductDetailEnhanceOptions(
-      window.IgnisProductDetailEnhanceOptionsPlatform,
+  function announce() {
+    document.dispatchEvent(
+      new window.CustomEvent(READY_EVENT, {
+        detail: function initOnce(platform) {
+          document.removeEventListener(REQUEST_EVENT, announce);
+          init(platform);
+        },
+      }),
     );
   }
+
+  document.addEventListener(REQUEST_EVENT, announce);
+  announce();
 })(window, document);

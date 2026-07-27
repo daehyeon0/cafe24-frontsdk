@@ -173,6 +173,9 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
   await wait();
 
+  assert.equal(dom.window.IgnisProductDetailEnhanceOptions, undefined);
+  assert.equal(dom.window.IgnisProductDetailEnhanceOptionsPlatform, undefined);
+
   function confirmTenPack() {
     document
       .querySelector('.ignis-quantity-option[data-quantity="10"]')
@@ -421,6 +424,9 @@ test('모바일 어댑터는 PackSize 선택 시 BottomSheet를 연다', async (
   dom.window.eval(coreScript);
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
   await wait();
+
+  assert.equal(dom.window.IgnisProductDetailEnhanceOptions, undefined);
+  assert.equal(dom.window.IgnisProductDetailEnhanceOptionsPlatform, undefined);
 
   const dialog = document.querySelector('.ignis-flavor-options');
 
