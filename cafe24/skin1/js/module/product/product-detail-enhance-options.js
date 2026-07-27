@@ -359,13 +359,6 @@
     header.dataset.expanded = 'true'
     header.append(title, chevron);
 
-    header.addEventListener('click', function () {
-      var expanded = header.dataset.expanded === 'true';
-
-      header.dataset.expanded = String(!expanded);
-      panel.dataset.hidden = expanded;
-    });
-
     picker.append(header);
     panel.append(fragment);
     picker.append(panel);
@@ -383,14 +376,29 @@
 
     cell.insertBefore(picker, sourceList);
 
-    panel.addEventListener('click', function (event) {
-      var button = event.target.closest('.ignis-quantity-option');
+    picker.addEventListener('click', function (event) {
+      var headerClassName = 'ignis-quantity-header'
+      var optionClassName = 'ignis-quantity-option'
 
-      if (!button || button.disabled) {
+      var target = event.target.closest(
+        `.${headerClassName}, .${optionClassName}`,
+      );
+
+      if (!target) {
         return;
       }
 
-      handleClickQuantity(button.dataset.quantity);
+      if (target.className.includes(headerClassName)) {
+        var expanded = header.dataset.expanded === 'true';
+
+        header.dataset.expanded = String(!expanded);
+        panel.dataset.hidden = expanded;
+        return;
+      }
+
+      if (target.className.includes(optionClassName)) {
+       handleClickQuantity(target.dataset.quantity);
+      }
     });
 
   }
@@ -431,10 +439,10 @@
       String(selectedQuantity);
     flavorPicker.querySelectorAll('.ignis-flavor-option').forEach(
       function (option) {
-        var output = option.querySelector('output');
+        var input = option.querySelector('output');
 
-        if (output) {
-          output.textContent = String(selectedFlavor[option.dataset.index] || 0);
+        if (input) {
+          input.textContent = String(selectedFlavor[option.dataset.index] || 0);
         }
       },
     );
@@ -527,6 +535,11 @@
           },
         );
         nativeLink.click();
+        document.querySelectorAll('.ec-product-selected').forEach(
+          function (element) {
+            element.classList.remove('ec-product-selected');
+          },
+        );
         return;
       }
 
@@ -566,27 +579,48 @@
     return input && input.closest('tr');
   }
 
-  function replaceQuantityButtonIcon(button, svgMarkup) {
-    var image = button && button.querySelector('img');
+  function interceptQuantityInput(
+    quantityInput,
+    selectedOptionBasketItem,
+    output,
+  ) {
+    quantityInput.ignisQuantityTarget = output;
+    quantityInput.ignisQuantityItem = selectedOptionBasketItem;
 
-    if (!image) {
-      return;
+    if (!quantityInput.ignisQuantityIntercepted) {
+      var descriptor = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(quantityInput),
+        'value',
+      );
+
+      if (descriptor && descriptor.get && descriptor.set) {
+        Object.defineProperty(quantityInput, 'value', {
+          configurable: true,
+          enumerable: descriptor.enumerable,
+          get: function () {
+            return descriptor.get.call(this);
+          },
+          set: function (value) {
+            descriptor.set.call(this, value);
+
+            var count = Number(this.value);
+
+            if (Number.isFinite(count)) {
+              this.ignisQuantityItem.count = count;
+              this.ignisQuantityTarget.textContent = count;
+            }
+          },
+        });
+        quantityInput.ignisQuantityIntercepted = true;
+      }
     }
 
-    var template = document.createElement('template');
+    var count = Number(quantityInput.value);
 
-    template.innerHTML = svgMarkup.trim();
-
-    var svg = template.content.firstElementChild;
-
-    ['id', 'class'].forEach(function (attribute) {
-      var value = image.getAttribute(attribute);
-
-      if (value !== null) {
-        svg.setAttribute(attribute, value);
-      }
-    });
-    image.replaceWith(svg);
+    if (Number.isFinite(count)) {
+      selectedOptionBasketItem.count = count;
+      output.textContent = count;
+    }
   }
 
   function interceptOptionBoxPrice(optionBoxPrice, price) {
@@ -634,13 +668,31 @@
     var optionBasket = document.createElement('div');
 
     optionBasket.className = 'option-basket';
-    optionBasket.innerHTML =
-      '<div class="option-basket"></div>';
     oldOptionBasketContainer.append(optionBasket);
 
-    optionBasket
-      .querySelector('.option-basket')
-      .addEventListener('click', function (event) {
+    optionBasket.addEventListener('click', function (event) {
+        var deleteButton = event.target.closest(
+          '.basket-item header [data-basket-action="delete"]',
+        );
+
+        if (deleteButton) {
+          var basketItem = deleteButton.closest('.basket-item');
+          var productId = basketItem.querySelector(
+            '.basket-stepper',
+          ).dataset.productId;
+          var nativeOptionRow = getNativeOptionRow(productId);
+          var nativeDelete =
+            nativeOptionRow && nativeOptionRow.querySelector('.delete');
+
+          if (nativeDelete) {
+            (nativeDelete.closest('a') || nativeDelete).click();
+          }
+
+          selectedOptionBasketItems.delete(productId);
+          updateOptionBasket();
+          return;
+        }
+
         var button = event.target.closest(
           '.basket-stepper [data-basket-action]',
         );
@@ -663,24 +715,10 @@
         var nativeButton =
           nativeOptionRow &&
           nativeOptionRow.querySelector(`.quantity a.${action}`);
-        var change = action === 'up' ? 1 : -1;
 
         if (nativeButton) {
           nativeButton.click();
         }
-
-        selectedOptionBasketItem.count = Math.max(
-          1,
-          selectedOptionBasketItem.count + change,
-        );
-        stepper.querySelector('output').textContent =
-          selectedOptionBasketItem.count;
-        stepper
-          .closest('.basket-item')
-          .querySelector('.price').textContent = formatWon(
-            QUANTITY_OPTIONS[selectedOptionBasketItem.quantity].price *
-              selectedOptionBasketItem.count,
-          );
       });
   }
 
@@ -690,10 +728,6 @@
     if (!optionBasket) {
       return;
     }
-
-    var previousBasketItems = Array.from(
-      optionBasket.querySelectorAll('.basket-item'),
-    );
 
     optionBasket.innerHTML = '';
     selectedOptionBasketItems.forEach(function (
@@ -720,53 +754,47 @@
             <strong class="quantity">${selectedOptionBasketItem.quantity}개입</strong>
             <p class="flavor">${flavorText}</p>
           </div>
+          <button type="button" class="remove" data-basket-action="delete" title="삭제" aria-label="삭제">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.883789 0.883911L10.8838 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+              <path d="M10.8838 0.883911L0.883789 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </header>
         <footer>
-          <span class="basket-stepper" data-product-id="${optionValue}"></span>
+          <span class="basket-stepper" data-product-id="${optionValue}">
+            <button type="button" data-basket-action="down" aria-label="수량 감소">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <output></output>
+            <button type="button" data-basket-action="up" aria-label="수량 증가">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </span>
           <span class="spacer"></span>
           <strong class="price"></strong>
         </footer>`;
       optionBasket.append(basketItem);
 
       var nativeOptionRow = getNativeOptionRow(optionValue);
-      var previousBasketItem = previousBasketItems.find(function (item) {
-        return (
-          item.querySelector('.basket-stepper').dataset.productId ===
-          optionValue
-        );
-      });
-      var nativeQuantity =
-        (previousBasketItem &&
-          previousBasketItem.querySelector('.basket-stepper .quantity')) ||
-        (nativeOptionRow && nativeOptionRow.querySelector('.quantity'));
-      var nativeDelete =
-        (previousBasketItem &&
-          previousBasketItem.querySelector('header .delete')) ||
-        (nativeOptionRow && nativeOptionRow.querySelector('.delete'));
+      var quantityInput =
+        nativeOptionRow &&
+        nativeOptionRow.querySelector('.quantity input');
       var optionBoxPrice =
         nativeOptionRow &&
         nativeOptionRow.querySelector('input.option_box_price');
 
-      if (nativeQuantity) {
-        nativeQuantity.style.width = '';
-        replaceQuantityButtonIcon(
-          nativeQuantity.querySelector('a.down'),
-          `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-          </svg>`,
+      if (quantityInput) {
+        interceptQuantityInput(
+          quantityInput,
+          selectedOptionBasketItem,
+          basketItem.querySelector('.basket-stepper output'),
         );
-        replaceQuantityButtonIcon(
-          nativeQuantity.querySelector('a.up'),
-          `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>`,
-        );
-        basketItem.querySelector('.basket-stepper').appendChild(nativeQuantity);
-      }
-
-      if (nativeDelete) {
-        basketItem.querySelector('header').appendChild(nativeDelete);
       }
 
       if (optionBoxPrice) {
