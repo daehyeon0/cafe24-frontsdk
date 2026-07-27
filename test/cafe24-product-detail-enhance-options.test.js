@@ -18,11 +18,14 @@ const styles = await readFile(
   'utf8',
 );
 
-function wait() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+function wait(delay = 0) {
+  return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
-function nativeOptionMarkup() {
+function nativeOptionMarkup({
+  label = '10개입_1',
+  optionValue = 'P000000L000N',
+} = {}) {
   return `
     <tr class="option_product">
       <td colspan="3">
@@ -31,8 +34,8 @@ function nativeOptionMarkup() {
           <tbody>
             <tr>
               <td>
-                <input type="hidden" class="option_box_id" value="P000000L000N">
-                <p class="product">상품명<br> - <span>10개입_1</span></p>
+                <input type="hidden" class="option_box_id" value="${optionValue}">
+                <p class="product">상품명<br> - <span>${label}</span></p>
               </td>
               <td>
                 <span class="quantity">
@@ -56,7 +59,7 @@ function nativeOptionMarkup() {
                     <td>
                       <input
                         class="input_addoption"
-                        add_product_code="P000000L000N"
+                        add_product_code="${optionValue}"
                       >
                     </td>
                   </tr>
@@ -74,11 +77,21 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     `<!doctype html>
       <style>${styles}</style>
       <div id="product-data">{"price":32900}</div>
+      <div class="xans-product-addoption">
+        <input
+          id="unrelated-add-option"
+          class="input_addoption"
+          add_product_code="P000000L000N"
+        >
+      </div>
       <div class="xans-product-option">
         <table><tbody><tr>
           <th>옵션 선택 (필수)</th>
           <td>
             <ul class="ec-product-button">
+              <li title="10개입_2" option_value="P000000L000O">
+                <a href="#none"><span>10개입_2</span></a>
+              </li>
               <li title="10개입_1" option_value="P000000L000N">
                 <a href="#none"><span>10개입_1</span></a>
               </li>
@@ -97,12 +110,20 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     },
   );
   const { document, Event } = dom.window;
-  const nativeOptionLink = document.querySelector('.ec-product-button a');
+  const clickedOptionValues = [];
   const optionRows = document.querySelector('.option_products');
 
-  nativeOptionLink.addEventListener('click', (event) => {
-    event.preventDefault();
-    optionRows.insertAdjacentHTML('beforeend', nativeOptionMarkup());
+  function addNativeOption(option) {
+    const optionValue = option.getAttribute('option_value');
+
+    clickedOptionValues.push(optionValue);
+    optionRows.insertAdjacentHTML(
+      'beforeend',
+      nativeOptionMarkup({
+        label: option.getAttribute('title'),
+        optionValue,
+      }),
+    );
 
     const row = optionRows.lastElementChild;
     const quantity = row.querySelector('.quantity_opt');
@@ -119,18 +140,31 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
       deleteEvent.preventDefault();
       row.remove();
     });
+
+    return row;
+  }
+
+  document.querySelectorAll('.ec-product-button a').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      addNativeOption(link.closest('li'));
+    });
   });
 
   dom.window.eval(script);
   document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
   await wait();
 
-  async function selectTenPack() {
+  function confirmTenPack() {
     document
       .querySelector('.ignis-quantity-option[data-quantity="10"]')
       .click();
     document.querySelector('.ignis-flavor-option [data-change="1"]').click();
     document.querySelector('.ignis-flavor-confirm').click();
+  }
+
+  async function selectTenPack() {
+    confirmTenPack();
     await wait();
   }
 
@@ -141,6 +175,8 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
   const nativeQuantity = row.querySelector('.quantity');
   const nativeDelete = row.querySelector('.delete');
 
+  assert.deepEqual(clickedOptionValues, ['P000000L000N']);
+  assert.equal(document.querySelector('#unrelated-add-option').value, '');
   assert.ok(row.classList.contains('ignis-option-basket-item'));
   assert.ok(!nativeTable.classList.contains('displaynone'));
   assert.equal(document.querySelector('.option-basket'), null);
@@ -190,6 +226,65 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     row.querySelectorAll('.ignis-selected-option-summary').length,
     1,
   );
+
+  const alerts = [];
+  const errors = [];
+  dom.window.alert = (message) => alerts.push(message);
+  dom.window.console.error = (...args) => errors.push(args);
+  const secondOption = document.querySelector(
+    '.ec-product-button > li[option_value="P000000L000O"]',
+  );
+  const secondLink = secondOption.querySelector('a');
+  let pendingNativeClicks = 0;
+
+  secondLink.click = () => {
+    pendingNativeClicks += 1;
+    setTimeout(() => addNativeOption(secondOption), 5);
+  };
+
+  confirmTenPack();
+  document.querySelector('[data-close]').click();
+  document
+    .querySelector('.ignis-quantity-option[data-quantity="10"]')
+    .click();
+  document.querySelector('.ignis-flavor-option [data-change="1"]').click();
+  document.querySelector('.ignis-flavor-confirm').click();
+  await wait(20);
+
+  assert.equal(pendingNativeClicks, 1);
+  assert.equal(
+    document.querySelectorAll(
+      '.option_box_id[value="P000000L000O"]',
+    ).length,
+    1,
+  );
+
+  document
+    .querySelector('.option_box_id[value="P000000L000O"]')
+    .closest('.option_product')
+    .querySelector('.delete')
+    .click();
+
+  secondLink.click = () => {
+    addNativeOption(secondOption);
+    throw new Error('native click failed');
+  };
+
+  confirmTenPack();
+  await wait();
+
+  assert.equal(errors.at(-1)[0], '[Cafe24 option transaction]');
+  assert.equal(
+    alerts.at(-1),
+    '옵션을 추가하지 못했습니다. 다시 시도해 주세요.',
+  );
+  assert.equal(
+    document.querySelector(
+      '.option_box_id[value="P000000L000O"]',
+    ),
+    null,
+  );
+  assert.equal(document.querySelector('.ignis-flavor-confirm').disabled, false);
 
   dom.window.close();
 });

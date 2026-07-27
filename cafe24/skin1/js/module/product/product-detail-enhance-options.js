@@ -73,12 +73,244 @@
     }),
   });
 
-  var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+)$/;
-  var OPTION_SOURCE_SELECTOR =
-    '.xans-product-option .ec-product-button:not([data-ignis-quantity-enhanced])';
   var UNSELECTED_PACK_SIZE_VALUE = -1;
   var selectedPackSize = UNSELECTED_PACK_SIZE_VALUE;
   var selectedFlavorPackCounts = {};
+  var cafe24OptionAdapter = (function createCafe24OptionAdapter() {
+    var OPTION_LIST_SELECTOR =
+      '.xans-product-option .ec-product-button';
+    var OPTION_LABEL_PATTERN = /^(\d+)개입_(\d+)$/;
+    var ADD_OPTION_TIMEOUT_MS = 10000;
+    var selectionPending = false;
+
+    function getSourceOption(element) {
+      var label = (
+        element.getAttribute('title') ||
+        element.textContent ||
+        ''
+      ).trim();
+      var match = label.match(OPTION_LABEL_PATTERN);
+      var optionValue = element.getAttribute('option_value');
+
+      if (!match || !optionValue || !QUANTITY_OPTIONS[match[1]]) {
+        return null;
+      }
+
+      return {
+        packSize: Number(match[1]),
+        order: Number(match[2]),
+        optionValue: optionValue,
+        element: element,
+      };
+    }
+
+    function getQuantityGroups() {
+      var sourceOptions = Array.from(
+        document.querySelectorAll(
+          OPTION_LIST_SELECTOR + ' > li',
+        ),
+      )
+        .map(getSourceOption)
+        .filter(function (option) {
+          return !!option;
+        })
+        .sort(function (left, right) {
+          return (
+            left.packSize - right.packSize ||
+            left.order - right.order
+          );
+        });
+      var groups = new Map();
+
+      sourceOptions.forEach(function (option) {
+        if (!groups.has(option.packSize)) {
+          groups.set(option.packSize, []);
+        }
+
+        groups.get(option.packSize).push(option);
+      });
+
+      return groups;
+    }
+
+    function isUnavailable(option) {
+      return (
+        option.element.classList.contains('ec-product-disabled') ||
+        option.element.classList.contains('ec-product-soldout')
+      );
+    }
+
+    function getSelectableOption(packSize) {
+      var options = getQuantityGroups().get(Number(packSize)) || [];
+      var selectedOptionValues = new Set(
+        Array.from(
+          document.querySelectorAll(
+            '.option_products > .option_product .option_box_id',
+          ),
+        ).map(function (input) {
+          return input.value;
+        }),
+      );
+
+      return options.find(function (option) {
+        return (
+          !isUnavailable(option) &&
+          !selectedOptionValues.has(option.optionValue)
+        );
+      });
+    }
+
+    function getPackSizes() {
+      return Array.from(getQuantityGroups().keys());
+    }
+
+    function getEnhancementTarget() {
+      return document.querySelector(
+        OPTION_LIST_SELECTOR +
+          ':not([data-ignis-quantity-enhanced])',
+      );
+    }
+
+    function isPackSizeSelectable(packSize) {
+      return !!getSelectableOption(packSize);
+    }
+
+    function isSelectionPending() {
+      return selectionPending;
+    }
+
+    function commitSelection(packSize, flavorValue) {
+      if (selectionPending) {
+        return Promise.reject(
+          new Error('Cafe24 옵션 추가가 이미 진행 중입니다.'),
+        );
+      }
+
+      var option = getSelectableOption(packSize);
+      var nativeLink = option && option.element.querySelector('a');
+      var root = document.querySelector('#totalProducts > table');
+
+      if (!option || !nativeLink || !root) {
+        return Promise.reject(
+          new Error('선택할 수 있는 Cafe24 옵션이 없습니다.'),
+        );
+      }
+
+      var existingRows = new Set(
+        root.querySelectorAll('.option_products > .option_product'),
+      );
+
+      selectionPending = true;
+
+      return new Promise(function (resolve, reject) {
+        var observer;
+        var timeoutId;
+        var settled = false;
+
+        function finish(error, optionRow) {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          observer.disconnect();
+          window.clearTimeout(timeoutId);
+
+          if (error) {
+            var addedOptionRow = findAddedOptionRow();
+            var deleteButton =
+              addedOptionRow && addedOptionRow.querySelector('.delete');
+
+            if (deleteButton) {
+              try {
+                deleteButton.click();
+              } catch (rollbackError) {
+                console.error(
+                  '[Cafe24 option rollback]',
+                  rollbackError,
+                );
+              }
+            }
+
+            selectionPending = false;
+            reject(error);
+            return;
+          }
+
+          selectionPending = false;
+          resolve(optionRow);
+        }
+
+        function findAddedOptionRow() {
+          return Array.from(
+            root.querySelectorAll('.option_products > .option_product'),
+          ).find(function (optionRow) {
+            if (existingRows.has(optionRow)) {
+              return false;
+            }
+
+            var optionId = optionRow.querySelector('.option_box_id');
+
+            return (
+              optionId &&
+              optionId.value === option.optionValue
+            );
+          });
+        }
+
+        function completeWhenOptionRowExists() {
+          var optionRow = findAddedOptionRow();
+          var addOptionInput = optionRow && optionRow.querySelector(
+            '.xans-product-addoption .input_addoption',
+          );
+
+          if (
+            !addOptionInput ||
+            addOptionInput.getAttribute('add_product_code') !==
+              option.optionValue
+          ) {
+            return;
+          }
+
+          addOptionInput.value = flavorValue;
+          addOptionInput.disabled = true;
+          finish(null, optionRow);
+        }
+
+        observer = new MutationObserver(completeWhenOptionRowExists);
+        observer.observe(root, {
+          childList: true,
+          subtree: true,
+        });
+        timeoutId = window.setTimeout(function () {
+          finish(
+            new Error('Cafe24 옵션 생성 시간이 초과되었습니다.'),
+          );
+        }, ADD_OPTION_TIMEOUT_MS);
+
+        try {
+          nativeLink.click();
+          completeWhenOptionRowExists();
+        } catch (error) {
+          finish(error);
+        }
+
+        document.querySelectorAll('.ec-product-selected').forEach(
+          function (element) {
+            element.classList.remove('ec-product-selected');
+          },
+        );
+      });
+    }
+
+    return {
+      commitSelection: commitSelection,
+      getEnhancementTarget: getEnhancementTarget,
+      getPackSizes: getPackSizes,
+      isPackSizeSelectable: isPackSizeSelectable,
+      isSelectionPending: isSelectionPending,
+    };
+  })();
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
@@ -104,53 +336,6 @@
     }
   }
 
-  // 기존 option picker로 부터 값 가져오기
-  function getSourceOption(element) {
-    var label = (
-      element.getAttribute('title') ||
-      element.textContent ||
-      ''
-    ).trim();
-    var match = label.match(OPTION_LABEL_PATTERN);
-
-    if (!match || !QUANTITY_OPTIONS[match[1]]) {
-      return null;
-    }
-
-    return {
-      packSize: Number(match[1]),
-      order: Number(match[2]),
-      optionValue: element.getAttribute('option_value'),
-      element: element,
-    };
-  }
-
-  function getQuantityGroups() {
-    var sourceElements = Array.from(
-      document.querySelectorAll('.xans-product-option .ec-product-button > li'),
-    );
-
-    var sourceOptions = sourceElements.map(getSourceOption).filter(function (option) {
-      return !!option
-    }).sort(function (a, b) { return a - b });
-
-    if (sourceOptions.length === 0) {
-      return null;
-    }
-
-    var groups = new Map();
-
-    sourceOptions.forEach(function (option) {
-      if (!groups.has(option.packSize)) {
-        groups.set(option.packSize, []);
-      }
-
-      groups.get(option.packSize).push(option);
-    });
-
-    return groups;
-  }
-
   function createElement(tagName, className, text) {
     var element = document.createElement(tagName);
 
@@ -174,89 +359,20 @@
     });
   }
 
-  function isUnavailable(options) {
-    return options.every(function (option) {
-      return (
-        option.element.classList.contains('ec-product-disabled') ||
-        option.element.classList.contains('ec-product-soldout')
-      );
-    });
-  }
-
-  function getSelectableQuantityOption(options) {
-    if (!options) {
-      return null;
-    }
-
-    var selectedOptionValues = new Set(
-      Array.from(
-        document.querySelectorAll(
-          '.option_products > .option_product input[type="hidden"]',
-        ),
-      ).map(function (input) {
-        return input.value;
-      }),
-    );
-
-    return options.find(function (option) {
-      return !selectedOptionValues.has(option.optionValue);
-    });
-  }
-
-  function observeAddOptionInput(optionValue, value, callback) {
-    var addOptionRoot = document.querySelector('#totalProducts > table');
-
-    if (!addOptionRoot) {
+  function handleClickQuantity(packSize) {
+    if (cafe24OptionAdapter.isSelectionPending()) {
       return;
     }
 
-    var observer = new MutationObserver(function () {
-      var addOptionInput = Array.from(
-        document.querySelectorAll(
-          '.xans-product-addoption .input_addoption',
-        ),
-      ).find(function (element) {
-        return element.getAttribute('add_product_code') === optionValue;
-      });
-
-      if (!addOptionInput) {
-        return;
-      }
-
-      observer.disconnect();
-      addOptionInput.value = value;
-      addOptionInput.disabled = true;
-      callback(addOptionInput);
-    });
-
-    observer.observe(addOptionRoot, {
-      childList: true,
-      subtree: true,
-    });
-    window.setTimeout(function () {
-      observer.disconnect();
-    }, 10000);
-  }
-
-  function handleClickQuantity(packSize) {
     var picker = document.querySelector('.ignis-quantity-picker');
     var nextPackSize = Number(packSize);
 
-    if (nextPackSize !== UNSELECTED_PACK_SIZE_VALUE) {
-      var groups = getQuantityGroups();
-      var options = groups && groups.get(nextPackSize);
-
-      if (!options) {
-        console.error('[handleClickQuantity]: not expected quantity');
-        return;
-      }
-
-      var selectableOption = getSelectableQuantityOption(options);
-
-      if (isUnavailable(options) || !selectableOption) {
-        window.alert('이미 선택한 옵션입니다.');
-        return;
-      }
+    if (
+      nextPackSize !== UNSELECTED_PACK_SIZE_VALUE &&
+      !cafe24OptionAdapter.isPackSizeSelectable(nextPackSize)
+    ) {
+      window.alert('이미 선택한 옵션입니다.');
+      return;
     }
 
     selectedPackSize = nextPackSize;
@@ -314,7 +430,7 @@
     return button;
   }
 
-  function createPicker(sourceList, groups, originalPrice) {
+  function createPicker(sourceList, packSizes, originalPrice) {
     var row = sourceList.closest('tr');
     var cell = sourceList.closest('td');
 
@@ -324,30 +440,25 @@
 
     var picker = createElement('section', 'ignis-quantity-picker');
     var panel = createElement('ul', 'ignis-quantity-panel');
-    var fragment = document.createDocumentFragment()
+    var fragment = document.createDocumentFragment();
 
-    Array.from(groups.keys())
-      .sort(function (left, right) {
-        return left - right;
-      })
-      .forEach(function (packSize) {
-        var option = QUANTITY_OPTIONS[packSize];
+    packSizes.forEach(function (packSize) {
+      var option = QUANTITY_OPTIONS[packSize];
+      var unitPrice = option.price / packSize;
+      var totalPriceBeforeSale = (originalPrice / 10) * packSize;
+      var discountRate = 1 - option.price / totalPriceBeforeSale;
+      var discountPercentage = Math.round(discountRate * 100);
 
-        var unitPrice = option.price / packSize;
-        var totalPriceBeforeSale = (originalPrice / 10) * packSize;
-        var discountRate = 1 - option.price / totalPriceBeforeSale;
-        var discountPercentage = Math.round(
-           discountRate * 100,
-        );
-
-        fragment.append(createQuantityButton(
+      fragment.append(
+        createQuantityButton(
           packSize,
           Object.assign({}, option, {
             discountPercentage,
             unitPrice,
-          })
-        ))
-      });
+          }),
+        ),
+      );
+    });
 
     var header = createElement('button', 'ignis-quantity-header');
     var title = createElement(
@@ -407,18 +518,18 @@
   }
 
   function enhanceQuantityOptions() {
-    var optionSource = document.querySelector(OPTION_SOURCE_SELECTOR);
+    var optionSource = cafe24OptionAdapter.getEnhancementTarget();
     var originalPrice = getOriginalPrice();
 
     if (!optionSource || originalPrice === null) {
-      console.log('[enhanceQuantityOptions]: optionSorce already enhanced');
+      console.log('[enhanceQuantityOptions]: optionSource already enhanced');
       return;
     }
 
-    var groups = getQuantityGroups();
+    var packSizes = cafe24OptionAdapter.getPackSizes();
 
-    if (groups) {
-      createPicker(optionSource, groups, originalPrice);
+    if (packSizes.length > 0) {
+      createPicker(optionSource, packSizes, originalPrice);
     }
   }
 
@@ -501,18 +612,13 @@
       '</div>';
 
     sheet.addEventListener('click', function (event) {
+      if (cafe24OptionAdapter.isSelectionPending()) {
+        return;
+      }
+
       var confirmButton = event.target.closest('.ignis-flavor-confirm');
       if (confirmButton) {
-        var groups = getQuantityGroups();
-        var packSizeOptions = groups && groups.get(selectedPackSize);
-        var selectableOption = getSelectableQuantityOption(packSizeOptions);
-        var nativeLink = selectableOption && selectableOption.element.querySelector('a');
         var confirmedPackSize = selectedPackSize;
-
-        if (!nativeLink) {
-          window.alert('이미 선택한 옵션입니다.');
-          return;
-        }
 
         var flavorValue = Object.keys(selectedFlavorPackCounts)
           .filter(function (index) {
@@ -526,23 +632,26 @@
           })
           .join(',');
 
-        observeAddOptionInput(
-          selectableOption.optionValue,
-          flavorValue,
-          function (addOptionInput) {
-            enhanceNativeOptionBasketItem(
-              addOptionInput,
-              confirmedPackSize,
-            );
-            handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
-          },
-        );
-        nativeLink.click();
-        document.querySelectorAll('.ec-product-selected').forEach(
-          function (element) {
-            element.classList.remove('ec-product-selected');
-          },
-        );
+        confirmButton.disabled = true;
+        cafe24OptionAdapter
+          .commitSelection(confirmedPackSize, flavorValue)
+          .then(
+            function (optionRow) {
+              enhanceNativeOptionBasketItem(
+                optionRow,
+                confirmedPackSize,
+                flavorValue,
+              );
+              handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
+            },
+            function (error) {
+              console.error('[Cafe24 option transaction]', error);
+              window.alert(
+                '옵션을 추가하지 못했습니다. 다시 시도해 주세요.',
+              );
+              updateFlavorOptionPicker();
+            },
+          );
         return;
       }
 
@@ -579,10 +688,10 @@
   }
 
   function enhanceNativeOptionBasketItem(
-    addOptionInput,
+    optionRow,
     packSize,
+    flavorValue,
   ) {
-    var optionRow = addOptionInput.closest('.option_product');
     var nativeTable =
       optionRow && optionRow.querySelector('td > table');
     var product = nativeTable && nativeTable.querySelector(
@@ -614,7 +723,7 @@
     summary.querySelector('.ignis-selected-option-pack-size').textContent =
       packSize + '개입';
     summary.querySelector('.ignis-selected-option-flavor').textContent =
-      addOptionInput.value.replace(/ \* /g, '*').replace(/,/g, ' + ');
+      flavorValue.replace(/ \* /g, '*').replace(/,/g, ' + ');
     product.classList.add('ignis-selected-option-original');
     nativeTable.classList.remove('displaynone');
     optionRow.classList.add('ignis-option-basket-item');
