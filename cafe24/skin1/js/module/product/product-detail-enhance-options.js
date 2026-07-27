@@ -74,8 +74,115 @@
   });
 
   var UNSELECTED_PACK_SIZE_VALUE = -1;
-  var selectedPackSize = UNSELECTED_PACK_SIZE_VALUE;
-  var selectedFlavorPackCounts = {};
+  var selection = (function createSelection() {
+    var FLAVOR_PACK_SIZE = 10;
+    var packSize = UNSELECTED_PACK_SIZE_VALUE;
+    var flavorPackCounts = {};
+
+    function getFlavorPackTotal() {
+      return Object.keys(flavorPackCounts).reduce(function (sum, index) {
+        return sum + flavorPackCounts[index];
+      }, 0);
+    }
+
+    function snapshot() {
+      var selectedQuantity =
+        getFlavorPackTotal() * FLAVOR_PACK_SIZE;
+      var targetQuantity =
+        packSize === UNSELECTED_PACK_SIZE_VALUE ? 0 : packSize;
+
+      return {
+        packSize: packSize,
+        flavorPackCounts: Object.assign({}, flavorPackCounts),
+        selectedQuantity: selectedQuantity,
+        targetQuantity: targetQuantity,
+        canConfirm:
+          packSize !== UNSELECTED_PACK_SIZE_VALUE &&
+          selectedQuantity === packSize,
+      };
+    }
+
+    function reset() {
+      packSize = UNSELECTED_PACK_SIZE_VALUE;
+      flavorPackCounts = {};
+
+      return snapshot();
+    }
+
+    function selectPack(nextPackSize) {
+      nextPackSize = Number(nextPackSize);
+
+      if (!QUANTITY_OPTIONS[nextPackSize]) {
+        return snapshot();
+      }
+
+      packSize = nextPackSize;
+      flavorPackCounts = {};
+
+      return snapshot();
+    }
+
+    function changeFlavor(rawIndex, rawDelta) {
+      var index = Number(rawIndex);
+      var delta = Number(rawDelta);
+      var flavor = flavorOptions[index];
+
+      if (
+        packSize === UNSELECTED_PACK_SIZE_VALUE ||
+        !Number.isInteger(index) ||
+        !Number.isInteger(delta) ||
+        !flavor ||
+        flavor.isSoldout
+      ) {
+        return snapshot();
+      }
+
+      var currentCount = flavorPackCounts[index] || 0;
+      var otherCount = getFlavorPackTotal() - currentCount;
+      var maxCount = packSize / FLAVOR_PACK_SIZE - otherCount;
+      var nextCount = Math.max(
+        0,
+        Math.min(currentCount + delta, maxCount),
+      );
+
+      if (nextCount > 0) {
+        flavorPackCounts[index] = nextCount;
+      } else {
+        delete flavorPackCounts[index];
+      }
+
+      return snapshot();
+    }
+
+    function confirm() {
+      var state = snapshot();
+
+      if (!state.canConfirm) {
+        return null;
+      }
+
+      return {
+        packSize: state.packSize,
+        flavorValue: Object.keys(state.flavorPackCounts)
+          .map(function (index) {
+            return (
+              flavorOptions[index].title +
+              ' * ' +
+              state.flavorPackCounts[index]
+            );
+          })
+          .join(','),
+      };
+    }
+
+    return {
+      changeFlavor: changeFlavor,
+      confirm: confirm,
+      reset: reset,
+      selectPack: selectPack,
+      snapshot: snapshot,
+    };
+  })();
   var cafe24OptionAdapter = (function createCafe24OptionAdapter() {
     var OPTION_LIST_SELECTOR =
       '.xans-product-option .ec-product-button';
@@ -350,13 +457,21 @@
     return element;
   }
 
-  function updateQuantityOptionPicker(picker) {
+  function updateQuantityOptionPicker(picker, state) {
     picker.querySelectorAll('.ignis-quantity-option').forEach(function (button) {
       button.classList.toggle(
         'is-selected',
-        Number(button.dataset.quantity) === selectedPackSize,
+        Number(button.dataset.quantity) === state.packSize,
       );
     });
+  }
+
+  function renderSelection(state) {
+    updateQuantityOptionPicker(
+      document.querySelector('.ignis-quantity-picker'),
+      state,
+    );
+    updateFlavorOptionPicker(state);
   }
 
   function handleClickQuantity(packSize) {
@@ -364,21 +479,18 @@
       return;
     }
 
-    var picker = document.querySelector('.ignis-quantity-picker');
     var nextPackSize = Number(packSize);
 
-    if (
-      nextPackSize !== UNSELECTED_PACK_SIZE_VALUE &&
-      !cafe24OptionAdapter.isPackSizeSelectable(nextPackSize)
-    ) {
-      window.alert('이미 선택한 옵션입니다.');
-      return;
-    }
+    if (nextPackSize === UNSELECTED_PACK_SIZE_VALUE) {
+      renderSelection(selection.reset());
+    } else {
+      if (!cafe24OptionAdapter.isPackSizeSelectable(nextPackSize)) {
+        window.alert('이미 선택한 옵션입니다.');
+        return;
+      }
 
-    selectedPackSize = nextPackSize;
-    selectedFlavorPackCounts = {};
-    updateQuantityOptionPicker(picker);
-    updateFlavorOptionPicker();
+      renderSelection(selection.selectPack(nextPackSize));
+    }
   }
 
   function createQuantityButton(packSize, config) {
@@ -533,13 +645,7 @@
     }
   }
 
-  function getSelectedFlavorPackTotal() {
-    return Object.keys(selectedFlavorPackCounts).reduce(function (sum, index) {
-      return sum + selectedFlavorPackCounts[index];
-    }, 0);
-  }
-
-  function updateFlavorOptionPicker() {
+  function updateFlavorOptionPicker(state) {
     var flavorPicker = document.querySelector('.ignis-flavor-options');
 
     if (!flavorPicker) {
@@ -547,28 +653,26 @@
     }
 
     flavorPicker.dataset.hidden = String(
-      selectedPackSize === UNSELECTED_PACK_SIZE_VALUE,
+      state.packSize === UNSELECTED_PACK_SIZE_VALUE,
     );
     flavorPicker.querySelector('header .quantity').textContent =
-      String(selectedPackSize);
+      String(state.packSize);
     flavorPicker.querySelectorAll('.ignis-flavor-option').forEach(
       function (option) {
         var input = option.querySelector('output');
 
         if (input) {
           input.textContent = String(
-            selectedFlavorPackCounts[option.dataset.index] || 0,
+            state.flavorPackCounts[option.dataset.index] || 0,
           );
         }
       },
     );
 
-    var selectedFlavorPackTotal = getSelectedFlavorPackTotal();
-
     flavorPicker.querySelector('.ignis-flavor-total strong').textContent =
-      `(${selectedFlavorPackTotal * 10}/${selectedPackSize}개)`;
+      `(${state.selectedQuantity}/${state.targetQuantity}개)`;
     flavorPicker.querySelector('.ignis-flavor-confirm').disabled =
-      selectedFlavorPackTotal * 10 !== selectedPackSize;
+      !state.canConfirm;
   }
 
   function createFlavorOptions() {
@@ -618,29 +722,24 @@
 
       var confirmButton = event.target.closest('.ignis-flavor-confirm');
       if (confirmButton) {
-        var confirmedPackSize = selectedPackSize;
+        var confirmation = selection.confirm();
 
-        var flavorValue = Object.keys(selectedFlavorPackCounts)
-          .filter(function (index) {
-            return selectedFlavorPackCounts[index] > 0;
-          })
-          .map(function (index) {
-            return (
-              `${flavorOptions[index].title} * ` +
-              selectedFlavorPackCounts[index]
-            );
-          })
-          .join(',');
+        if (!confirmation) {
+          return;
+        }
 
         confirmButton.disabled = true;
         cafe24OptionAdapter
-          .commitSelection(confirmedPackSize, flavorValue)
+          .commitSelection(
+            confirmation.packSize,
+            confirmation.flavorValue,
+          )
           .then(
             function (optionRow) {
               enhanceNativeOptionBasketItem(
                 optionRow,
-                confirmedPackSize,
-                flavorValue,
+                confirmation.packSize,
+                confirmation.flavorValue,
               );
               handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
             },
@@ -649,7 +748,7 @@
               window.alert(
                 '옵션을 추가하지 못했습니다. 다시 시도해 주세요.',
               );
-              updateFlavorOptionPicker();
+              renderSelection(selection.snapshot());
             },
           );
         return;
@@ -668,23 +767,16 @@
       }
 
       var option = changeButton.closest('.ignis-flavor-option');
-      var index = option.dataset.index;
-      var currentFlavorPackCount = selectedFlavorPackCounts[index] || 0;
-      var otherFlavorPackCount =
-        getSelectedFlavorPackTotal() - currentFlavorPackCount;
-      var maxFlavorPackCount =
-        selectedPackSize / 10 - otherFlavorPackCount;
-      var nextFlavorPackCount =
-        currentFlavorPackCount + Number(changeButton.dataset.change);
-
-      selectedFlavorPackCounts[index] = Math.max(
-        0,
-        Math.min(nextFlavorPackCount, maxFlavorPackCount),
+      renderSelection(
+        selection.changeFlavor(
+          option.dataset.index,
+          changeButton.dataset.change,
+        ),
       );
-      updateFlavorOptionPicker();
     });
 
     picker.insertAdjacentElement('afterend', sheet);
+    renderSelection(selection.snapshot());
   }
 
   function enhanceNativeOptionBasketItem(

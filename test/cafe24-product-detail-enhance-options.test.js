@@ -95,6 +95,9 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
               <li title="10개입_1" option_value="P000000L000N">
                 <a href="#none"><span>10개입_1</span></a>
               </li>
+              <li title="30개입_1" option_value="P000000L000P">
+                <a href="#none"><span>30개입_1</span></a>
+              </li>
             </ul>
             <p class="value">옵션을 선택해 주세요</p>
           </td>
@@ -167,6 +170,41 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
     confirmTenPack();
     await wait();
   }
+
+  const flavorPicker = document.querySelector('.ignis-flavor-options');
+  const firstFlavor = flavorPicker.querySelector(
+    '.ignis-flavor-option[data-index="0"]',
+  );
+  const firstFlavorCount = firstFlavor.querySelector('output');
+  const flavorConfirm = flavorPicker.querySelector(
+    '.ignis-flavor-confirm',
+  );
+
+  document
+    .querySelector('.ignis-quantity-option[data-quantity="30"]')
+    .click();
+  firstFlavor.querySelector('[data-change="1"]').click();
+  firstFlavor.querySelector('[data-change="1"]').click();
+  assert.equal(firstFlavorCount.textContent, '2');
+  assert.equal(flavorConfirm.disabled, true);
+
+  firstFlavor.querySelector('[data-change="1"]').click();
+  firstFlavor.querySelector('[data-change="1"]').click();
+  assert.equal(firstFlavorCount.textContent, '3');
+  assert.equal(flavorConfirm.disabled, false);
+
+  document
+    .querySelector('.ignis-quantity-option[data-quantity="10"]')
+    .click();
+  assert.equal(firstFlavorCount.textContent, '0');
+  assert.equal(flavorConfirm.disabled, true);
+
+  firstFlavor.querySelector('[data-change="-1"]').click();
+  firstFlavor.querySelector('[data-change="1"]').click();
+  firstFlavor.querySelector('[data-change="1"]').click();
+  assert.equal(firstFlavorCount.textContent, '1');
+  assert.equal(flavorConfirm.disabled, false);
+  document.querySelector('[data-close]').click();
 
   await selectTenPack();
 
