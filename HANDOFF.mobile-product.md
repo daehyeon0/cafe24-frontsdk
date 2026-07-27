@@ -16,12 +16,14 @@
 - 구현·git 커밋 완료.
 - `mobile/index.html`은 홈 전용이라 변경하지 않음.
 - 모바일은 `#product-data`가 없으므로 `#product_price`와 `window.product_price`로 원가를 읽음.
+- 100px 옵션 열에 피커가 갇히던 UI 축소 문제를 옵션 테이블 자동 레이아웃으로 수정.
 
 ## 검증
 
 - `node --check cafe24/mobile/js/module/product/detail-enhance-options.js` 통과.
 - 실제 `/m/product/.../11/` HTML JSDOM에서 4개 수량 피커·할인율 생성 통과.
 - `window.product_price` fallback과 Cafe24 native 옵션 행 연결·추가옵션 주입 통과.
+- 실제 Chrome 390px 검증: 테이블 377px, 피커·옵션 375px, 10개입 선택·맛 선택 노출 통과.
 - `npm test`는 기존 실패: sandbox의 `listen EPERM`, 기존 skin1 테스트 기대 문자열 불일치, 빈 `public/script-ignis.js`.
 - TODO: `TODO.mobile-product.md` 참고.
 
