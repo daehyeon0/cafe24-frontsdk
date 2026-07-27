@@ -79,7 +79,6 @@
   var UNSELECTED_PACK_SIZE_VALUE = -1;
   var selectedPackSize = UNSELECTED_PACK_SIZE_VALUE;
   var selectedFlavorPackCounts = {};
-  var selectedOptionBasketItems = new Map();
 
   function formatWon(value) {
     return Number(value).toLocaleString('ko-KR') + '원';
@@ -211,7 +210,7 @@
       return;
     }
 
-    var observer = new MutationObserver(function (e) {
+    var observer = new MutationObserver(function () {
       var addOptionInput = Array.from(
         document.querySelectorAll(
           '.xans-product-addoption .input_addoption',
@@ -220,10 +219,14 @@
         return element.getAttribute('add_product_code') === optionValue;
       });
 
+      if (!addOptionInput) {
+        return;
+      }
+
       observer.disconnect();
       addOptionInput.value = value;
       addOptionInput.disabled = true;
-      callback();
+      callback(addOptionInput);
     });
 
     observer.observe(addOptionRoot, {
@@ -504,6 +507,7 @@
         var packSizeOptions = groups && groups.get(selectedPackSize);
         var selectableOption = getSelectableQuantityOption(packSizeOptions);
         var nativeLink = selectableOption && selectableOption.element.querySelector('a');
+        var confirmedPackSize = selectedPackSize;
 
         if (!nativeLink) {
           window.alert('이미 선택한 옵션입니다.');
@@ -525,22 +529,12 @@
         observeAddOptionInput(
           selectableOption.optionValue,
           flavorValue,
-          function () {
-            selectedOptionBasketItems.set(
-              selectableOption.optionValue,
-              {
-                packSize: Number(selectedPackSize),
-                flavorPackCounts: Object.assign(
-                  {},
-                  selectedFlavorPackCounts,
-                ),
-                lineItemQuantity: 1,
-              },
+          function (addOptionInput) {
+            enhanceNativeOptionBasketItem(
+              addOptionInput,
+              confirmedPackSize,
             );
             handleClickQuantity(UNSELECTED_PACK_SIZE_VALUE);
-
-            enhanceOptionBasket();
-            updateOptionBasket();
           },
         );
         nativeLink.click();
@@ -584,243 +578,59 @@
     picker.insertAdjacentElement('afterend', sheet);
   }
 
-  function getNativeOptionRow(optionValue) {
-    var input = Array.from(
-      document.querySelectorAll('.option_product input'),
-    ).find(function (input) {
-      return input.value === optionValue;
-    });
-
-    return input && input.closest('tr');
-  }
-
-  function interceptLineItemQuantityInput(
-    quantityInput,
-    selectedOptionBasketItem,
-    output,
+  function enhanceNativeOptionBasketItem(
+    addOptionInput,
+    packSize,
   ) {
-    quantityInput.ignisLineItemQuantityTarget = output;
-    quantityInput.ignisLineItemQuantityItem = selectedOptionBasketItem;
-
-    if (!quantityInput.ignisLineItemQuantityIntercepted) {
-      var descriptor = Object.getOwnPropertyDescriptor(
-        Object.getPrototypeOf(quantityInput),
-        'value',
-      );
-
-      if (descriptor && descriptor.get && descriptor.set) {
-        Object.defineProperty(quantityInput, 'value', {
-          configurable: true,
-          enumerable: descriptor.enumerable,
-          get: function () {
-            return descriptor.get.call(this);
-          },
-          set: function (value) {
-            descriptor.set.call(this, value);
-
-            var lineItemQuantity = Number(this.value);
-
-            if (Number.isFinite(lineItemQuantity)) {
-              this.ignisLineItemQuantityItem.lineItemQuantity =
-                lineItemQuantity;
-              this.ignisLineItemQuantityTarget.textContent =
-                lineItemQuantity;
-            }
-          },
-        });
-        quantityInput.ignisLineItemQuantityIntercepted = true;
-      }
-    }
-
-    var lineItemQuantity = Number(quantityInput.value);
-
-    if (Number.isFinite(lineItemQuantity)) {
-      selectedOptionBasketItem.lineItemQuantity = lineItemQuantity;
-      output.textContent = lineItemQuantity;
-    }
-  }
-
-  function interceptOptionBoxPrice(optionBoxPrice, price) {
-    optionBoxPrice.ignisPriceTarget = price;
-
-    if (!optionBoxPrice.ignisPriceIntercepted) {
-      var descriptor = Object.getOwnPropertyDescriptor(
-        Object.getPrototypeOf(optionBoxPrice),
-        'value',
-      );
-
-      if (!descriptor || !descriptor.get || !descriptor.set) {
-        return;
-      }
-
-      Object.defineProperty(optionBoxPrice, 'value', {
-        configurable: true,
-        enumerable: descriptor.enumerable,
-        get: function () {
-          return descriptor.get.call(this);
-        },
-        set: function (value) {
-          descriptor.set.call(this, value);
-
-          if (this.ignisPriceTarget) {
-            this.ignisPriceTarget.textContent = formatWon(value);
-          }
-        },
-      });
-      optionBoxPrice.ignisPriceIntercepted = true;
-    }
-
-    price.textContent = formatWon(optionBoxPrice.value);
-  }
-
-  function enhanceOptionBasket() {
-    var oldOptionBasketContainer = document.querySelector(
-      '#totalProducts .option_product:not([data-enhanced]) td',
+    var optionRow = addOptionInput.closest('.option_product');
+    var nativeTable =
+      optionRow && optionRow.querySelector('td > table');
+    var product = nativeTable && nativeTable.querySelector(
+      'tbody > tr:first-child .product',
     );
 
-    oldOptionBasketContainer.querySelector('table').classList.add('displaynone');
-    oldOptionBasketContainer.closest('.option_product').dataset.enhanced =
-      'true';
-
-    var optionBasket = document.createElement('div');
-
-    optionBasket.className = 'option-basket';
-    oldOptionBasketContainer.append(optionBasket);
-
-    optionBasket.addEventListener('click', function (event) {
-        var deleteButton = event.target.closest(
-          '.basket-item header [data-basket-action="delete"]',
-        );
-
-        if (deleteButton) {
-          var basketItem = deleteButton.closest('.basket-item');
-          var productId = basketItem.querySelector(
-            '.basket-stepper',
-          ).dataset.productId;
-          var nativeOptionRow = getNativeOptionRow(productId);
-          var nativeDelete =
-            nativeOptionRow && nativeOptionRow.querySelector('.delete');
-
-          if (nativeDelete) {
-            (nativeDelete.closest('a') || nativeDelete).click();
-          }
-
-          selectedOptionBasketItems.delete(productId);
-          updateOptionBasket();
-          return;
-        }
-
-        var button = event.target.closest(
-          '.basket-stepper [data-basket-action]',
-        );
-
-        if (!button) {
-          return;
-        }
-
-        var stepper = button.closest('.basket-stepper');
-        var selectedOptionBasketItem = selectedOptionBasketItems.get(
-          stepper.dataset.productId,
-        );
-
-        if (!selectedOptionBasketItem) {
-          return;
-        }
-
-        var action = button.dataset.basketAction;
-        var nativeOptionRow = getNativeOptionRow(stepper.dataset.productId);
-        var nativeButton =
-          nativeOptionRow &&
-          nativeOptionRow.querySelector(`.quantity a.${action}`);
-
-        if (nativeButton) {
-          nativeButton.click();
-        }
-      });
-  }
-
-  function updateOptionBasket() {
-    var optionBasket = document.querySelector('.option-basket');
-
-    if (!optionBasket) {
+    if (!optionRow || !nativeTable || !product) {
       return;
     }
 
-    optionBasket.innerHTML = '';
-    selectedOptionBasketItems.forEach(function (
-      selectedOptionBasketItem,
-      optionValue,
-    ) {
-      var flavorText = Object.keys(selectedOptionBasketItem.flavorPackCounts)
-        .filter(function (index) {
-          return selectedOptionBasketItem.flavorPackCounts[index] > 0;
-        })
-        .map(function (index) {
-          return (
-            `${flavorOptions[index].title}*` +
-            selectedOptionBasketItem.flavorPackCounts[index]
-          );
-        })
-        .join(' + ');
-      var basketItem = document.createElement('div');
+    var summary = product.parentElement.querySelector(
+      '.ignis-selected-option-summary',
+    );
 
-      basketItem.className = 'basket-item';
-      basketItem.innerHTML = `
-        <header>
-          <div class="desc">
-            <strong class="quantity">${selectedOptionBasketItem.packSize}개입</strong>
-            <p class="flavor">${flavorText}</p>
-          </div>
-          <button type="button" class="remove" data-basket-action="delete" title="삭제" aria-label="삭제">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0.883789 0.883911L10.8838 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-              <path d="M10.8838 0.883911L0.883789 10.8839" stroke="#697077" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </header>
-        <footer>
-          <span class="basket-stepper" data-product-id="${optionValue}">
-            <button type="button" data-basket-action="down" aria-label="수량 감소">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="square" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <output></output>
-            <button type="button" data-basket-action="up" aria-label="수량 증가">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.33301 8H12.6663" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 3.33325V12.6666" stroke="#171717" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </span>
-          <span class="spacer"></span>
-          <strong class="price"></strong>
-        </footer>`;
-      optionBasket.append(basketItem);
+    if (!summary) {
+      summary = createElement('div', 'ignis-selected-option-summary');
+      summary.append(
+        createElement('strong', 'ignis-selected-option-pack-size'),
+        createElement('p', 'ignis-selected-option-flavor'),
+      );
+      product.insertAdjacentElement('afterend', summary);
+    }
 
-      var nativeOptionRow = getNativeOptionRow(optionValue);
-      var quantityInput =
-        nativeOptionRow &&
-        nativeOptionRow.querySelector('.quantity input');
-      var optionBoxPrice =
-        nativeOptionRow &&
-        nativeOptionRow.querySelector('input.option_box_price');
+    var quantityInput = optionRow.querySelector('.quantity input');
+    var quantityUp = optionRow.querySelector('.quantity .up');
+    var quantityDown = optionRow.querySelector('.quantity .down');
+    var deleteButton = optionRow.querySelector('.delete');
 
-      if (quantityInput) {
-        interceptLineItemQuantityInput(
-          quantityInput,
-          selectedOptionBasketItem,
-          basketItem.querySelector('.basket-stepper output'),
-        );
-      }
+    summary.querySelector('.ignis-selected-option-pack-size').textContent =
+      packSize + '개입';
+    summary.querySelector('.ignis-selected-option-flavor').textContent =
+      addOptionInput.value.replace(/ \* /g, '*').replace(/,/g, ' + ');
+    product.classList.add('ignis-selected-option-original');
+    nativeTable.classList.remove('displaynone');
+    optionRow.classList.add('ignis-option-basket-item');
 
-      if (optionBoxPrice) {
-        interceptOptionBoxPrice(
-          optionBoxPrice,
-          basketItem.querySelector('.price'),
-        );
-      }
-    });
+    if (quantityInput) {
+      quantityInput.setAttribute('aria-label', '수량');
+    }
+    if (quantityUp) {
+      quantityUp.setAttribute('aria-label', '수량 증가');
+    }
+    if (quantityDown) {
+      quantityDown.setAttribute('aria-label', '수량 감소');
+    }
+    if (deleteButton) {
+      deleteButton.setAttribute('aria-label', '삭제');
+    }
   }
 
   function boot() {
