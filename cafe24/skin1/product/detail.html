@@ -21,6 +21,11 @@
     <!--
 		$coupon_download_page = /coupon/coupon_productdetail.html
     -->
+    <div id="product-data" class="displaynone">
+        {
+            "price": {$product_custom}
+        }
+    </div>
     <div class="headingArea">
         <h2>{$name}</h2>
         <span class="delivery {$delvtype_display|display}">(해외배송 가능상품)</span>
@@ -166,7 +171,7 @@
                 -->
                 <caption>상품 옵션</caption>
                 <tbody module="product_option">
-                <tr>
+                <tr class="displaynone">
                     <th scope="row">{$option_name}</th>
                     <td>{$form.option}<p class="value">{$option_desc}</p></td>
                 </tr>
@@ -210,7 +215,7 @@
 
             <div class="guideArea">
 
-                <p class="info {$limit_display|display}">(최소주문수량 {$minimum_limit}개 이상<span class="{$maximum_limit_display|display}"> / 최대주문수량 {$maximum_limit}개 이하</span>)</p>
+                <!--<p class="info {$limit_display|display}">(최소주문수량 {$minimum_limit}개 이상<span class="{$maximum_limit_display|display}"> / 최대주문수량 {$maximum_limit}개 이하</span>)</p>-->
 
                 <span class="sizeGuide {$size_guide_display|display}"><a href="#none" class="{$size_guide_class}" product_no="{$product_no}">사이즈 가이드</a></span>
             </div>
@@ -472,7 +477,7 @@
 
             <div id="{$total.total_id}" class="{$total.total_display|display}">
                 <p class="ec-base-help txtWarn txt11 {$single_item_display|display}"> 수량을 선택해주세요.</p>
-                <p class="ec-base-help txtWarn txt11 {$several_item_display|display}"> 위 옵션선택 박스를 선택하시면 아래에 상품이 추가됩니다.</p>
+                <!--<p class="ec-base-help txtWarn txt11 {$several_item_display|display}"> 위 옵션선택 박스를 선택하시면 아래에 상품이 추가됩니다.</p>-->
                 <table border="1" summary="">
                     <caption>상품 목록</caption>
                     <colgroup>
@@ -885,4 +890,8 @@
         </div>
     </div>
 </div>
+
+<script src="https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/js/product-detail-config.js?v=6"></script>
+<script src="https://ecimg.cafe24img.com/pg3185b70119868017/df6d/web/js/product-detail-enhance-options-core.js?v=24"></script>
+<!--@js(/js/module/product/product-detail-enhance-options.js)-->
 <!--@define(cmc_log)-->
