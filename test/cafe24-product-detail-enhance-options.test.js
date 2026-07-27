@@ -31,6 +31,13 @@ const styles = await readFile(
   ),
   'utf8',
 );
+const mobileStyles = await readFile(
+  new URL(
+    '../cafe24/mobile/css/module/product/detail.css',
+    import.meta.url,
+  ),
+  'utf8',
+);
 
 function wait(delay = 0) {
   return new Promise((resolve) => setTimeout(resolve, delay));
@@ -388,6 +395,7 @@ test('Cafe24 선택 상품을 복제하지 않고 native row를 꾸민다', asyn
 test('모바일 어댑터는 PackSize 선택 시 BottomSheet를 연다', async () => {
   const dom = new JSDOM(
     `<!doctype html>
+      <style>${mobileStyles}</style>
       <input id="product_price" value="32900">
       <div class="xans-product-option">
         <table><tbody><tr>
@@ -419,6 +427,13 @@ test('모바일 어댑터는 PackSize 선택 시 BottomSheet를 연다', async (
   HTMLDialogElement.prototype.close = function () {
     this.removeAttribute('open');
   };
+
+  assert.equal(
+    dom.window.getComputedStyle(
+      document.querySelector('.ec-product-button'),
+    ).display,
+    'none',
+  );
 
   dom.window.eval(mobileScript);
   dom.window.eval(coreScript);

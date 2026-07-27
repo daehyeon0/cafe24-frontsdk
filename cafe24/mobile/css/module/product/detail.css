@@ -317,6 +317,7 @@
 .ec-base-table:has(.ignis-quantity-picker) > table > colgroup { display:none !important; }
 .ignis-quantity-option-row > th { display:none !important; }
 .ignis-quantity-option-row > td { display:table-cell !important; width:100% !important; padding:0 !important; border-top:0 !important; }
+.xans-product-option .ec-product-button:has(> li[title*="개입_"]) { display:none !important; }
 .ignis-quantity-original { display:none !important; }
 .ignis-quantity-picker { width:100%; margin:10px 0 4px; color:#1f1f1f; font-family:inherit; box-sizing:border-box; }
 .ignis-quantity-picker * { box-sizing:border-box; }
