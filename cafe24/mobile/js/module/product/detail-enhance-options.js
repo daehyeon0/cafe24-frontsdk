@@ -5,9 +5,9 @@
   var READY_EVENT = 'ignis:product-detail-enhance-options:ready';
 
   function getOriginalPriceFallback() {
-    var productPrice = document.querySelector('#product_price');
+    var productPrice = document.querySelector('#span_product_price_custom');
     var originalPrice = Number(
-      (productPrice && productPrice.value) || window.product_price,
+      productPrice.innerText.replaceAll(/[^\d]/g, '') || window.product_price,
     );
 
     return Number.isFinite(originalPrice) && originalPrice > 0
