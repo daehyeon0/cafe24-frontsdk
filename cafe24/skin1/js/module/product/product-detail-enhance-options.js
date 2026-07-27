@@ -1,7 +1,7 @@
 (function initIgnisQuantityPicker(window, document) {
   'use strict';
 
-  var flavorOptions = [
+  var FLAVOR_OPTIONS = [
     {
       title: '떡볶이맛 (10개입)',
       description: '130kcal, 단백질 18g',
@@ -125,7 +125,7 @@
     function changeFlavor(rawIndex, rawDelta) {
       var index = Number(rawIndex);
       var delta = Number(rawDelta);
-      var flavor = flavorOptions[index];
+      var flavor = FLAVOR_OPTIONS[index];
 
       if (
         packSize === UNSELECTED_PACK_SIZE_VALUE ||
@@ -166,7 +166,7 @@
         flavorValue: Object.keys(state.flavorPackCounts)
           .map(function (index) {
             return (
-              flavorOptions[index].title +
+              FLAVOR_OPTIONS[index].title +
               ' * ' +
               state.flavorPackCounts[index]
             );
@@ -788,7 +788,7 @@
       return;
     }
 
-    var options = flavorOptions
+    var options = FLAVOR_OPTIONS
       .map(function (flavor, index) {
         return '<li class="ignis-flavor-option' +
           (flavor.isSoldout ? ' is-soldout' : '') +
